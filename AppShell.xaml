@@ -1,0 +1,37 @@
+<Shell
+    x:Class="Aquatir.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:Aquatir"
+    Shell.FlyoutBehavior="Disabled"
+    Shell.TabBarBackgroundColor="#2C3E50"
+    Shell.TabBarForegroundColor="White"
+    Shell.TabBarTitleColor="White"
+    Shell.TabBarUnselectedColor="#95A5A6"
+    Shell.BackgroundColor="#2C3E50">
+
+    <Shell.BackgroundColor>
+        <OnPlatform x:TypeArguments="Color">
+            <On Platform="Android" Value="#2C3E50" />
+        </OnPlatform>
+    </Shell.BackgroundColor>
+    <TabBar>
+        <ShellContent
+            Title="Главная"
+            Icon="home_icon.png"
+            ContentTemplate="{DataTemplate local:MainPage}"
+            Route="MainPage" />
+
+        <ShellContent
+            Title="История"
+            Icon="orders_icon.png"
+            ContentTemplate="{DataTemplate local:OrderHistoryPage}"
+            Route="OrderHistoryPage" />
+
+        <ShellContent
+            Title="Настройки"
+            Icon="settings_icon.png"
+            ContentTemplate="{DataTemplate local:SettingsPage}"
+            Route="SettingsPage" />
+    </TabBar>
+</Shell>

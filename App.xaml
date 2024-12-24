@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Aquatir"
+             x:Class="Aquatir.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="Button">
+                <Setter Property="BackgroundColor">
+                    <Setter.Value>
+                        <OnPlatform x:TypeArguments="Color">
+                            <On Platform="Android" Value="SkyBlue" />
+                        </OnPlatform>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="Shell">
+                <Setter Property="Shell.TabBarBackgroundColor" Value="#2C3E50" />
+                <!-- Цвет фона -->
+                <Setter Property="Shell.TabBarForegroundColor" Value="White" />
+                <!-- Цвет текста/иконок -->
+                <Setter Property="Shell.TabBarTitleColor" Value="White" />
+                <!-- Цвет заголовка -->
+                <Setter Property="Shell.TabBarUnselectedColor" Value="#95A5A6" />
+                <!-- Цвет невыбранных -->
+            </Style>
+            
+            <Style TargetType="CollectionView">
+                <Setter Property="ItemTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <ViewCell>
+                                <Label Text="{Binding .}"
+                                       BackgroundColor="White"
+                                       Padding="10"
+                                       FontSize="16"/>
+                            </ViewCell>
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="AndroidCollectionViewStyle" TargetType="CollectionView">
+                <Setter Property="ItemTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <ViewCell>
+                                <Label Text="{Binding .}"
+                                       BackgroundColor="White"
+                                       Padding="10"
+                                       FontSize="16"/>
+                            </ViewCell>
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Aquatir.Converters"
+             x:Class="Aquatir.ProductSelectionPage"
+             Title="Выбор продукции">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <local:BooleanToTextConverter x:Key="BooleanToTextConverter" />
+            <local:BooleanToRestockedTextConverter x:Key="BooleanToRestockedTextConverter" />
+            <local:BooleanToEndConverter x:Key="BooleanToEndConverter" />
+            <local:NameToFormattedStringConverter x:Key="NameToFormattedStringConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <SearchBar x:Name="ProductSearchBar"
+                   Placeholder="Поиск продукта по наименованию"
+                   TextChanged="OnSearchTextChanged"
+                   Grid.Row="0"
+                   Margin="10"
+                   FontSize="16" />
+
+        <ScrollView Grid.Row="2" Padding="10">
+            <CollectionView x:Name="ProductCollectionView"
+                            SelectionMode="Single"
+                            SelectionChanged="OnProductSelected">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <StackLayout Orientation="Horizontal" Padding="10,5">
+
+                            <Label Text="•" FontSize="16" />
+                            <Label FontSize="16" Margin="5,0,0,0">
+                                <Label.FormattedText>
+                                    <Binding Path="Name" Converter="{StaticResource NameToFormattedStringConverter}" />
+                                </Label.FormattedText>
+                            </Label>
+                            <Label Text="{Binding DisplayPrice}" FontSize="16" Margin="10,0,0,0" />
+                            
+                            <Label Text="{Binding IsNew, Converter={StaticResource BooleanToTextConverter}}" 
+                            FontSize="16" 
+                            TextColor="Red" 
+                            IsVisible="{Binding IsNew}" 
+                            VerticalOptions="Center" 
+                            HorizontalOptions="Start" />
+
+                            <Label Text="{Binding IsEnd, Converter={StaticResource BooleanToEndConverter}}" 
+                            FontSize="16" 
+                            TextColor="Orange" 
+                            IsVisible="{Binding IsEnd}" 
+                            VerticalOptions="Center" 
+                            HorizontalOptions="Start" />
+
+                            <Label Text="{Binding IsRes, Converter={StaticResource BooleanToRestockedTextConverter}}" 
+                            FontSize="16" 
+                            TextColor="Green" 
+                            IsVisible="{Binding IsRes}" 
+                            VerticalOptions="Center" 
+                            HorizontalOptions="Start" />
+
+                        </StackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </ScrollView>
+
+        <ActivityIndicator x:Name="LoadingIndicator"
+                           IsRunning="False"
+                           IsVisible="False"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           Grid.RowSpan="3" />
+    </Grid>
+</ContentPage>

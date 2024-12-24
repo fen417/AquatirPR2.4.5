@@ -1,0 +1,35 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Aquatir.OrderDetailsPage"
+             Title="Детали заказа">
+
+    <StackLayout Padding="10">
+        <Label Text="{Binding CustomerName}" FontSize="24" HorizontalOptions="Center" Margin="10,0,0,0" />
+        <Label Text="{Binding OrderDate, StringFormat='На какую дату сделан заказ: {0:dd.MM.yyyy}'}" Margin="10,0,0,0" />
+
+        <ListView ItemsSource="{Binding Products}" Margin="10,10,0,0">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextCell Text="{Binding DisplayName}" Detail="{Binding DisplayQuantity}" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Отображаем общую сумму -->
+        <Label Text="{Binding FormattedTotalAmount}" FontSize="18" Margin="10,0,0,0" />
+
+        <!-- Кнопка для восстановления заказа -->
+        <Button Text="Восстановить для редактирования"
+                Clicked="OnRestoreOrderClicked"
+                VerticalOptions="Start"
+                Padding="10" 
+                Margin="10,10,10,10" 
+                FontAttributes="Bold" 
+                FontSize="18"/>
+
+        <Button Text="Назад" Command="{Binding GoBackCommand}"  
+                Margin="10,10,10,10"
+                FontAttributes="Bold" 
+                FontSize="18" />
+    </StackLayout>
+</ContentPage>

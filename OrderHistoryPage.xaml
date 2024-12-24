@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Aquatir.OrderHistoryPage"
+             Title="Моя история заказов">
+
+    <ContentPage.ToolbarItems>
+        <!-- Кнопка для перезагрузки страницы -->
+        <ToolbarItem Text="Обновить"
+                     Clicked="OnRefreshButtonClicked"
+                     IconImageSource="refresh_icon.png" />
+    </ContentPage.ToolbarItems>
+
+    <StackLayout VerticalOptions="FillAndExpand">
+        <!-- Список заказов -->
+        <ListView x:Name="OrdersListView" 
+                  ItemTapped="OnOrderTapped"
+                  Margin="10,0,0,0">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextCell Text="{Binding CustomerName}" 
+                              Detail="{Binding FormattedOrderDetails}" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Кнопка очистки истории заказов -->
+        <Button Text="Очистить историю заказов" 
+                VerticalOptions="End"
+                Clicked="OnClearOrderHistoryClicked"
+                Margin="10,10,10,10"
+                FontAttributes="Bold" 
+                FontSize="18"/>
+    </StackLayout>
+</ContentPage>

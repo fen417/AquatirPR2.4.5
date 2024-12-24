@@ -1,0 +1,169 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Целевые платформы -->
+    <TargetFrameworks>net9.0-android;</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Aquatir</RootNamespace>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Информация о приложении -->
+    <ApplicationTitle>Aquatir</ApplicationTitle>
+    <ApplicationId>com.companyname.aquatir</ApplicationId>
+    <ApplicationIdGuid>6510f323-3691-4dc2-8bce-b75132b95de6</ApplicationIdGuid>
+    <!-- Версии приложения -->
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <!-- Поддержка платформ -->
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+    <TargetPlatformVersion Condition="'$(TargetFramework)' == 'net9.0-windows'">10.0.22000.0</TargetPlatformVersion>
+    <!-- Параметры сборки -->
+    <PackageCertificateThumbprint>4A7FF75237F656A1E51DCC9AA9F9FC95B04C4940</PackageCertificateThumbprint>
+    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
+    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <AppInstallerUri>D:\Aquatir</AppInstallerUri>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+    <DefaultLanguage>ru-ru</DefaultLanguage>
+    <Platforms>AnyCPU;ARM64</Platforms>
+    <SignAssembly>True</SignAssembly>
+    <PackageIcon>sc250ke.png</PackageIcon>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Configurations>Debug;Release;Release1</Configurations>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>NU1900</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android35.0|AnyCPU'">
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release1|net9.0-android35.0|AnyCPU'">
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android35.0|ARM64'">
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release1|net9.0-android35.0|ARM64'">
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android35.0|AnyCPU'">
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android35.0|ARM64'">
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.26100.0</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android35.0|AnyCPU'">
+    <AndroidEnableMultiDex>False</AndroidEnableMultiDex>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android35.0|ARM64'">
+    <AndroidEnableMultiDex>False</AndroidEnableMultiDex>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android35.0|AnyCPU'">
+    <AndroidEnableMultiDex>False</AndroidEnableMultiDex>
+    <DebugSymbols>True</DebugSymbols>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android35.0|ARM64'">
+    <AndroidEnableMultiDex>False</AndroidEnableMultiDex>
+    <DebugSymbols>True</DebugSymbols>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release1|net9.0-android35.0|AnyCPU'">
+    <AndroidEnableMultiDex>False</AndroidEnableMultiDex>
+    <DebugSymbols>True</DebugSymbols>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release1|net9.0-android35.0|ARM64'">
+    <AndroidEnableMultiDex>False</AndroidEnableMultiDex>
+    <DebugSymbols>True</DebugSymbols>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
+    <EnableLLVM>False</EnableLLVM>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|ARM64'">
+    <EnableLLVM>False</EnableLLVM>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
+    <EnableLLVM>False</EnableLLVM>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|ARM64'">
+    <EnableLLVM>False</EnableLLVM>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release1|net9.0-android|AnyCPU'">
+    <EnableLLVM>False</EnableLLVM>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release1|net9.0-android|ARM64'">
+    <EnableLLVM>False</EnableLLVM>
+  </PropertyGroup>
+  <ItemGroup>
+    <MauiIcon Include="Resources\AppIcon\aq.png" Color="#512BD4" />
+    <MauiSplashScreen Include="Platforms\Android\Resources\drawable\logo.png" Color="#ffffff" BaseSize="128,128" />
+    <MauiImage Include="Resources\Images\*" />
+    <MauiFont Include="Resources\Fonts\*" />
+    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Resources\Assets\%24placeholder%24.scale-100.png" />
+    <None Remove="Resources\Assets\%24placeholder%24.scale-125.png" />
+    <None Remove="Resources\Assets\%24placeholder%24.scale-150.png" />
+    <None Remove="Resources\Assets\%24placeholder%24.scale-200.png" />
+    <None Remove="Resources\Assets\%24placeholder%24.scale-400.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\Assets\$placeholder$.scale-100.png" />
+    <Content Include="Resources\Assets\$placeholder$.scale-125.png" />
+    <Content Include="Resources\Assets\$placeholder$.scale-150.png" />
+    <Content Include="Resources\Assets\$placeholder$.scale-200.png" />
+    <Content Include="Resources\Assets\$placeholder$.scale-400.png" />
+  </ItemGroup>
+  <!-- Зависимости -->
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Maui" Version="9.1.1" />
+    <PackageReference Include="Dropbox.Api" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.14" />
+    <PackageReference Include="Microsoft.Maui.Essentials" Version="9.0.14" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.14" />
+    <PackageReference Include="MailKit" Version="4.9.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Resources\Assets\sc250ke.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
+  </ItemGroup>
+  <ItemGroup>
+    <MauiXaml Update="OrderDetailsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="OrderHistoryPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="PasswordPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+  </ItemGroup>
+</Project>
