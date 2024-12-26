@@ -17,7 +17,7 @@
 
 
         </StackLayout>
-        <Label Text="Версия программы: r2.4.5 от 24.12.2024" 
+        <Label Text="Версия программы: r2.5.0 от 26.12.2024" 
         FontSize="14" 
         HorizontalOptions="Center" 
         VerticalOptions="EndAndExpand" 

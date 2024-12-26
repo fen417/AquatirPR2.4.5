@@ -22,7 +22,6 @@ namespace Aquatir
         public MainPage()
         {
             InitializeComponent();
-            CheckReminder();
             bool isAuthorizationDisabled = Preferences.Get("AuthorizationDisabled", false);
             Preferences.Set("AuthorizationDisabled", false); // ЗАМЕНИТЬ НА FALSE ДЛЯ ВКЛЮЧЕНИЯ АВТОРИЗАЦИИ
             if (!Preferences.ContainsKey("ShowPackagedProducts"))
@@ -87,6 +86,7 @@ namespace Aquatir
                     "И/П Сырбул",
                     "И/П Хаджи",
                     "И/П Кобзарь",
+                    "ООО Наполи (р-н Джорджия)",
                     "Сигл Комета",
                     "Сигл Ларионова",
                     "У Семёныча",
@@ -159,7 +159,6 @@ namespace Aquatir
             }
         }
 
-
         private void OnDirectionChanged(object sender, EventArgs e)
         {
             if (DirectionPicker == null)
@@ -178,12 +177,11 @@ namespace Aquatir
                 }
             }
         }
-        protected override async void OnAppearing()
+       
+
+        protected override void OnAppearing()
         {
             base.OnAppearing();
-            var updateChecker = new UpdateChecker();
-            await updateChecker.CheckForUpdatesAsync();
-
             if (Preferences.ContainsKey("CurrentOrder"))
             {
                 string currentOrderJson = Preferences.Get("CurrentOrder", string.Empty);
@@ -242,17 +240,7 @@ namespace Aquatir
                 Console.WriteLine($"Ошибка при сохранении текущего заказа: {ex.Message}");
             }
         }
-        private async void CheckReminder()
-        {
-            var currentDate = DateTime.Now;
-            var lastReminderDate = Preferences.Get("LastReminderDate", DateTime.MinValue);
-            if (currentDate.Date != lastReminderDate.Date && currentDate.DayOfWeek == DayOfWeek.Monday)
-            {
-                await DisplayAlert("Напоминание", "Завтра вторник, не забудьте заказать горячее копчение!", "OK");
-                Preferences.Set("LastReminderDate", currentDate);
-            }
-        }
-
+        
         private void OnCustomerSelected(object sender, EventArgs e)
         {
             if (CustomerPicker.SelectedIndex != -1)
@@ -280,26 +268,41 @@ namespace Aquatir
         {
             try
             {
-                var productItem = new ProductItem
-                {
-                    Name = productName,
-                    Quantity = quantity,
-                    PricePerKg = productName.EndsWith("ВЕС.") ? GetProductPrice(productName, "Kg") : 0,
-                    PricePerUnit = productName.EndsWith("УП.") ? GetProductPrice(productName, "Unit") : 0,
-                    PricePerCont = productName.EndsWith("КОНТ.") ? GetProductPrice(productName, "Cont") : 0,
-                    PricePerPiece = productName.EndsWith("ШТ.") ? GetProductPrice(productName, "Piece") : 0,
-                    PricePerVedro = productName.EndsWith("В.") ? GetProductPrice(productName, "Vedro") : 0
-                };
+                // Проверка, существует ли уже продукт в заказе
+                var existingProduct = _currentOrder.Products
+                    .FirstOrDefault(p => p.Name == productName);
 
-                _currentOrder.Products.Add(productItem);
-                UpdatePreview();
-                SaveCurrentOrder();
+                if (existingProduct != null)
+                {
+                    // Если продукт найден, суммируем количество
+                    existingProduct.Quantity += quantity;
+                }
+                else
+                {
+                    // Если продукта нет, добавляем новый
+                    var productItem = new ProductItem
+                    {
+                        Name = productName,
+                        Quantity = quantity,
+                        PricePerKg = productName.EndsWith("ВЕС.") ? GetProductPrice(productName, "Kg") : 0,
+                        PricePerUnit = productName.EndsWith("УП.") ? GetProductPrice(productName, "Unit") : 0,
+                        PricePerCont = productName.EndsWith("КОНТ.") ? GetProductPrice(productName, "Cont") : 0,
+                        PricePerPiece = productName.EndsWith("ШТ.") ? GetProductPrice(productName, "Piece") : 0,
+                        PricePerVedro = productName.EndsWith("В.") ? GetProductPrice(productName, "Vedro") : 0
+                    };
+
+                    _currentOrder.Products.Add(productItem);
+                }
+
+                UpdatePreview(); // Обновляем превью
+                SaveCurrentOrder(); // Сохраняем заказ
             }
             catch (Exception ex)
             {
                 DisplayAlert("Ошибка", $"Произошла ошибка при добавлении продукта: {ex.Message}", "OK");
             }
         }
+
         private void SaveCurrentOrder()
         {
             if (_currentOrder == null) return;
@@ -447,68 +450,6 @@ namespace Aquatir
                 }
             }
         }
-
-        public class UpdateChecker
-        {
-            private const string CurrentAndroidVersion = "2.2.0";
-            private const string CurrentWindowsVersion = "1.8.0";
-
-            public async Task CheckForUpdatesAsync()
-            {
-                var currentDate = DateTime.Now.Date;
-                var lastUpdateCheckDate = Preferences.Get("LastUpdateCheckDate", DateTime.MinValue);
-
-                if (currentDate != lastUpdateCheckDate)
-                {
-                    string latestVersion = string.Empty;
-                    string updateUrl = string.Empty;
-
-                    if (DeviceInfo.Platform == DevicePlatform.Android)
-                    {
-                        latestVersion = await GetLatestVersionFromDropbox("https://dl.dropboxusercontent.com/scl/fi/jympvant0ebp8agurng79/version.txt?rlkey=8wppzk49439lu14vnysjjg4qv&dl=1");
-                        updateUrl = "https://play.google.com/store/apps/details?id=com.aquatir.app&hl=ru";
-                    }
-                    else if (DeviceInfo.Platform == DevicePlatform.WinUI)
-                    {
-                        latestVersion = await GetLatestVersionFromDropbox("https://dl.dropboxusercontent.com/scl/fi/jympvant0ebp8agurng79/version.txt?rlkey=8wppzk49439lu14vnysjjg4qv&dl=1");
-                        updateUrl = "https://www.dropbox.com/scl/fo/u36qc2xfm1w76vbhd411r/ADP5rWn4KaNR208d8X2vzdw?rlkey=usuw971s5iyv2w9fp61ibywgl&dl=1";
-                    }
-
-                    if (!string.Equals(latestVersion.Trim(), (DeviceInfo.Platform == DevicePlatform.Android ? CurrentAndroidVersion : CurrentWindowsVersion), StringComparison.OrdinalIgnoreCase))
-                    {
-                        bool updateAvailable = await Application.Current.MainPage.DisplayAlert(
-                            "Обновление доступно",
-                            "Доступно новое обновление. Хотите скачать?",
-                            "Да",
-                            "Нет");
-
-                        if (updateAvailable)
-                        {
-                            await Launcher.OpenAsync(new Uri(updateUrl));
-                        }
-                    }
-                    Preferences.Set("LastUpdateCheckDate", currentDate);
-                }
-            }
-            private async Task<string> GetLatestVersionFromDropbox(string url)
-            {
-                using var httpClient = new HttpClient();
-                var response = await httpClient.GetStringAsync(url);
-                var versionLines = response.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-                string version = string.Empty;
-                if (DeviceInfo.Platform == DevicePlatform.Android)
-                {
-                    version = versionLines[1];
-                }
-                else if (DeviceInfo.Platform == DevicePlatform.WinUI)
-                {
-                    version = versionLines[4];
-                }
-
-                return version.Trim();
-            }
-        }
         private async void OnSettingsClicked(object sender, EventArgs e)
         {
             await Navigation.PushAsync(new SettingsPage());
@@ -568,10 +509,11 @@ namespace Aquatir
                 {
                     var directionText = !string.IsNullOrWhiteSpace(order.Direction) ? order.Direction : "Не указано";
                     var bodyText = $"<div><b><u><font size='5'>{order.CustomerName} ({directionText}).</font><font size='3'> Заявка на {orderDateText}</font></u></b></div>";
-
                     var sortedProducts = order.Products
-                        .OrderBy(product => GetProductGroupIndex(RemoveColorTags(product.Name), groupOrder))
-                        .ThenBy(product => RemoveColorTags(product.Name));
+                    .OrderBy(product => GetProductGroupIndex(RemoveColorTags(product.Name), groupOrder))
+                    .ThenBy(product => RemoveColorTags(product.Name), StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(product => product.Name, StringComparer.OrdinalIgnoreCase);
+
 
                     foreach (var product in sortedProducts)
                     {
@@ -609,18 +551,17 @@ namespace Aquatir
             }
         }
 
-        // Метод для удаления цветовых тегов
         private string RemoveColorTags(string input)
         {
             return Regex.Replace(input, @"<\/?color.*?>", string.Empty);
         }
 
-
         private int GetProductGroupIndex(string productName, List<string> groupOrder)
         {
             foreach (var group in groupOrder)
             {
-                if (ProductCache.CachedProducts[group].Any(product => product.Name == productName))
+                if (ProductCache.CachedProducts[group]
+                    .Any(product => RemoveColorTags(product.Name) == productName))
                 {
                     return groupOrder.IndexOf(group);
                 }

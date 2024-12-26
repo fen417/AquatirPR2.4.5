@@ -164,6 +164,7 @@ namespace Aquatir
                     var quantityPopup = new QuantityInputPopup();
                     quantityPopup.QuantityConfirmed += async (sender, quantity) =>
                     {
+                        // Добавляем продукт в заказ
                         _mainPage.AddProductToOrder(cleanProductName, quantity);
 
                         if (Preferences.Get("AutoReturnEnabled", false))
@@ -182,6 +183,7 @@ namespace Aquatir
                         result = result.Replace(",", ".");
                         if (decimal.TryParse(result, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal quantity) && quantity > 0)
                         {
+                            // Добавляем продукт в заказ
                             _mainPage.AddProductToOrder(cleanProductName, quantity);
                             await DisplayAlert("Успех", $"{cleanProductName} успешно добавлен(а) в заказ.", "OK");
 
@@ -200,6 +202,7 @@ namespace Aquatir
                 ProductCollectionView.SelectedItem = null;
             }
         }
+
 
         public class QuantityInputPopup : Popup
         {
