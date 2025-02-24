@@ -132,7 +132,7 @@
             <Button Text="Моя история заказов" Clicked="OnOrderHistoryClicked" FontAttributes="Bold" FontSize="18" Margin="0,10" IsVisible="{OnPlatform WinUI=true, Default=false}"/>
             <Button Text="Настройки" Clicked="OnSettingsClicked" FontAttributes="Bold" FontSize="18" Margin="0,10"  IsVisible="{OnPlatform WinUI=true, Default=false}"/>
 
-            <Label Text="2024г. ©Aquatir" 
+            <Label Text="2025г. ©Aquatir" 
                FontSize="14" 
                HorizontalOptions="Center" 
                VerticalOptions="EndAndExpand" 
