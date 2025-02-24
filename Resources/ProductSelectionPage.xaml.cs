@@ -53,7 +53,12 @@ namespace Aquatir
                 var loadedProducts = await LoadAllProductsFromUrl();
                 foreach (var group in loadedProducts)
                 {
-                    ProductCache.CachedProducts[group.Key] = group.Value;
+                    // Проверяем, нужно ли обновить конкретную группу
+                    if (!ProductCache.CachedProducts.ContainsKey(group.Key) ||
+                        (DateTime.Now - lastLoadTime).TotalHours >= 24)
+                    {
+                        ProductCache.CachedProducts[group.Key] = group.Value;
+                    }
                 }
 
                 Preferences.Set(loadTimeKey, DateTime.Now.ToString("O"));
@@ -158,6 +163,7 @@ namespace Aquatir
             {
                 // Удаление тегов <color> и </color> из имени продукта
                 string cleanProductName = Regex.Replace(selectedProduct.Name, @"<\/?color.*?>", string.Empty);
+                _mainPage.SaveSelectedOrderDate();
 
                 if (DeviceInfo.Platform == DevicePlatform.WinUI) // Для Windows (WinUI)
                 {

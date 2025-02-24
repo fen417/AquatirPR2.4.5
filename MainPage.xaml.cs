@@ -177,11 +177,29 @@ namespace Aquatir
                 }
             }
         }
-       
 
+        public void SaveSelectedOrderDate()
+        {
+            Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
+        }
         protected override void OnAppearing()
         {
             base.OnAppearing();
+
+            Console.WriteLine("OnAppearing called");
+
+            // Восстановление сохранённой даты заказа
+            if (Preferences.ContainsKey("SelectedOrderDate"))
+            {
+                string savedDate = Preferences.Get("SelectedOrderDate", DateTime.Now.ToString("o"));
+                if (DateTime.TryParse(savedDate, null, DateTimeStyles.RoundtripKind, out DateTime restoredDate))
+                {
+                    OrderDatePicker.Date = restoredDate;
+                    Console.WriteLine($"Date restored to: {restoredDate}");
+                }
+            }
+
+            // Восстановление текущего заказа
             if (Preferences.ContainsKey("CurrentOrder"))
             {
                 string currentOrderJson = Preferences.Get("CurrentOrder", string.Empty);
@@ -190,43 +208,19 @@ namespace Aquatir
                     try
                     {
                         var restoredOrder = JsonConvert.DeserializeObject<Order>(currentOrderJson);
-
-                        if (string.IsNullOrWhiteSpace(CustomerNameEntry.Text))
-                        {
-                            CustomerNameEntry.Text = restoredOrder.CustomerName;
-                        }
-
-                        if (DirectionPicker.SelectedItem == null)
-                        {
-                            DirectionPicker.SelectedItem = restoredOrder.Direction;
-                        }
-
-                        OrderDatePicker.Date = restoredOrder.OrderDate;
-                        CommentEntry.Text = restoredOrder.Comment;
                         _currentOrder = restoredOrder;
-                        PreviewCollectionView.ItemsSource = _currentOrder.Products
-                            .Select(p => FormatProductString(p))
-                            .ToList();
+
+                        Console.WriteLine($"Current order restored: {restoredOrder.OrderID}");
                     }
                     catch (Exception ex)
                     {
                         _currentOrder = new Order();
+                        Console.WriteLine($"Error restoring order: {ex.Message}");
                     }
                 }
             }
-            else
-            {
-                if (string.IsNullOrWhiteSpace(CustomerNameEntry.Text))
-                {
-                    CustomerNameEntry.Text = Preferences.Get("UserShopName", string.Empty);
-                }
-
-                if (DirectionPicker.SelectedItem == null)
-                {
-                    DirectionPicker.SelectedItem = Preferences.Get("UserCity", string.Empty);
-                }
-            }
         }
+
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
@@ -268,18 +262,15 @@ namespace Aquatir
         {
             try
             {
-                // Проверка, существует ли уже продукт в заказе
                 var existingProduct = _currentOrder.Products
                     .FirstOrDefault(p => p.Name == productName);
 
                 if (existingProduct != null)
                 {
-                    // Если продукт найден, суммируем количество
                     existingProduct.Quantity += quantity;
                 }
                 else
                 {
-                    // Если продукта нет, добавляем новый
                     var productItem = new ProductItem
                     {
                         Name = productName,
@@ -294,8 +285,12 @@ namespace Aquatir
                     _currentOrder.Products.Add(productItem);
                 }
 
-                UpdatePreview(); // Обновляем превью
-                SaveCurrentOrder(); // Сохраняем заказ
+                Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
+                Console.WriteLine($"Product added: {productName}, quantity: {quantity}");
+                Console.WriteLine($"Date saved: {OrderDatePicker.Date}");
+
+                UpdatePreview();
+                SaveCurrentOrder();
             }
             catch (Exception ex)
             {
@@ -318,20 +313,36 @@ namespace Aquatir
             }
         }
 
+        private static readonly Dictionary<string, ProductItem> _productPriceCache = new Dictionary<string, ProductItem>();
+
         private decimal GetProductPrice(string productName, string priceType)
         {
+            if (_productPriceCache.TryGetValue(productName, out var product))
+            {
+                return priceType switch
+                {
+                    "Kg" => product.PricePerKg,
+                    "Unit" => product.PricePerUnit,
+                    "Cont" => product.PricePerCont,
+                    "Piece" => product.PricePerPiece,
+                    "Vedro" => product.PricePerVedro,
+                    _ => 0
+                };
+            }
+
             foreach (var group in ProductCache.CachedProducts)
             {
-                var product = group.Value.FirstOrDefault(p => p.Name == productName);
-                if (product != null)
+                var foundProduct = group.Value.FirstOrDefault(p => p.Name == productName);
+                if (foundProduct != null)
                 {
+                    _productPriceCache[productName] = foundProduct;
                     return priceType switch
                     {
-                        "Kg" => product.PricePerKg,
-                        "Unit" => product.PricePerUnit,
-                        "Cont" => product.PricePerCont,
-                        "Piece" => product.PricePerPiece,
-                        "Vedro" => product.PricePerVedro,
+                        "Kg" => foundProduct.PricePerKg,
+                        "Unit" => foundProduct.PricePerUnit,
+                        "Cont" => foundProduct.PricePerCont,
+                        "Piece" => foundProduct.PricePerPiece,
+                        "Vedro" => foundProduct.PricePerVedro,
                         _ => 0
                     };
                 }
@@ -341,14 +352,23 @@ namespace Aquatir
 
         private async void OnGroupButtonClicked(object sender, EventArgs e)
         {
+            Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
             var button = sender as Button;
             string groupName = button.Text;
 
             await Navigation.PushAsync(new ProductSelectionPage(groupName, this));
         }
-       
+
         private async void OnFinishOrderClicked(object sender, EventArgs e)
         {
+            // Проверка, что дата заказа не в прошлом
+            if (OrderDatePicker.Date < DateTime.Today)
+            {
+                await DisplayAlert("Ошибка", "Дата заказа не может быть в прошлом. Пожалуйста, выберите корректную дату.", "OK");
+                return;
+            }
+
+            // Остальная логика метода
             if (string.IsNullOrWhiteSpace(CustomerNameEntry.Text) || !_currentOrder.Products.Any())
             {
                 await DisplayAlert("Ошибка", "Пожалуйста, заполните все поля.", "OK");
@@ -490,10 +510,11 @@ namespace Aquatir
             }
         }
 
-        private void SendOrdersByEmail(List<Order> selectedOrders)
+        private async Task SendOrdersByEmail(List<Order> selectedOrders)
         {
             var groupOrder = ProductCache.CachedProducts.Keys.ToList();
             var ordersByDate = selectedOrders.GroupBy(o => o.OrderDate).ToList();
+
             foreach (var orderGroup in ordersByDate)
             {
                 var message = new MimeMessage();
@@ -510,10 +531,9 @@ namespace Aquatir
                     var directionText = !string.IsNullOrWhiteSpace(order.Direction) ? order.Direction : "Не указано";
                     var bodyText = $"<div><b><u><font size='5'>{order.CustomerName} ({directionText}).</font><font size='3'> Заявка на {orderDateText}</font></u></b></div>";
                     var sortedProducts = order.Products
-                    .OrderBy(product => GetProductGroupIndex(RemoveColorTags(product.Name), groupOrder))
-                    .ThenBy(product => RemoveColorTags(product.Name), StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(product => product.Name, StringComparer.OrdinalIgnoreCase);
-
+                        .OrderBy(product => GetProductGroupIndex(RemoveColorTags(product.Name), groupOrder))
+                        .ThenBy(product => RemoveColorTags(product.Name), StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(product => product.Name, StringComparer.OrdinalIgnoreCase);
 
                     foreach (var product in sortedProducts)
                     {
@@ -537,24 +557,19 @@ namespace Aquatir
 
                     try
                     {
-                        client.Connect("smtp.mail.ru", 465, true);
-                        client.Authenticate("rep.1958@mail.ru", "zyxrhkQb4KwE0Udwz2cx");
-
-                        client.Send(message);
-                        client.Disconnect(true);
+                        await client.ConnectAsync("smtp.mail.ru", 465, true);
+                        await client.AuthenticateAsync("rep.1958@mail.ru", "zyxrhkQb4KwE0Udwz2cx");
+                        await client.SendAsync(message);
+                        await client.DisconnectAsync(true);
                     }
                     catch (Exception ex)
                     {
-                        DisplayAlert("Ошибка", $"Не удалось отправить заказы: {ex.Message}", "OK");
+                        await DisplayAlert("Ошибка", $"Не удалось отправить заказы: {ex.Message}", "OK");
                     }
                 }
             }
         }
 
-        private string RemoveColorTags(string input)
-        {
-            return Regex.Replace(input, @"<\/?color.*?>", string.Empty);
-        }
 
         private int GetProductGroupIndex(string productName, List<string> groupOrder)
         {
@@ -571,45 +586,62 @@ namespace Aquatir
 
         private string FormatProductString(ProductItem product)
         {
-            string productName = System.Text.RegularExpressions.Regex.Replace(product.Name, "<color.*?>|</color>", "").Trim();
-            decimal quantity = product.Quantity;
-            string unit = productName.EndsWith("ВЕС.") ? "кг." :
-                           productName.EndsWith("УП.") ? "уп." :
-                           productName.EndsWith("ШТ.") ? "шт." :
-                           productName.EndsWith("В.") ? "в." :
-                           productName.EndsWith("КОНТ.") ? "конт." : "";
+            // Удаляем теги <color> из названия продукта
+            string productName = RemoveColorTags(product.Name);
 
-            foreach (var unitString in new[] { "УП.", "ВЕС.", "ШТ.", "В.", "КОНТ." })
+            // Определяем единицу измерения и удаляем её из названия
+            var unitMapping = new Dictionary<string, string>
+    {
+        { "ВЕС.", "кг." },
+        { "УП.", "уп." },
+        { "ШТ.", "шт." },
+        { "В.", "в." },
+        { "КОНТ.", "конт." }
+    };
+
+            string unit = "";
+            foreach (var suffix in unitMapping.Keys)
             {
-                productName = productName.Replace(unitString, "").Trim();
+                if (productName.EndsWith(suffix))
+                {
+                    unit = unitMapping[suffix];
+                    productName = productName.Substring(0, productName.Length - suffix.Length).Trim();
+                    break;
+                }
             }
 
-            string formattedQuantity = quantity % 1 == 0 ? quantity.ToString("0") : quantity.ToString("0.0#");
-            bool showPrice = Preferences.Get("ShowPriceEnabled", false);
+            // Форматируем количество
+            string formattedQuantity = product.Quantity % 1 == 0
+                ? product.Quantity.ToString("0")
+                : product.Quantity.ToString("0.0#");
+
+            // Формируем информацию о цене
             string priceInfo = "";
+            bool showPrice = Preferences.Get("ShowPriceEnabled", false);
 
-            if (unit == "уп." && product.PricePerUnit > 0)
+            if (showPrice)
             {
-                priceInfo = showPrice ? $" ({quantity * product.PricePerUnit:N2} руб.)" : "";
-            }
-            else if (unit == "кг." && product.PricePerKg > 0)
-            {
-                priceInfo = showPrice ? $" ({quantity * product.PricePerKg:N2} руб.)" : "";
-            }
-            else if (unit == "конт." && product.PricePerCont > 0)
-            {
-                priceInfo = showPrice ? $" ({quantity * product.PricePerCont:N2} руб.)" : "";
-            }
-            else if (unit == "шт." && product.PricePerPiece > 0)
-            {
-                priceInfo = showPrice ? $" ({quantity * product.PricePerPiece:N2} руб.)" : "";
-            }
-            else if (unit == "в." && product.PricePerVedro > 0)
-            {
-                priceInfo = showPrice ? $" ({quantity * product.PricePerVedro:N2} руб.)" : "";
+                var priceMapping = new Dictionary<string, decimal>
+        {
+            { "уп.", product.PricePerUnit },
+            { "кг.", product.PricePerKg },
+            { "конт.", product.PricePerCont },
+            { "шт.", product.PricePerPiece },
+            { "в.", product.PricePerVedro }
+        };
+
+                if (priceMapping.TryGetValue(unit, out decimal price) && price > 0)
+                {
+                    priceInfo = $" ({product.Quantity * price:N2} руб.)";
+                }
             }
 
             return $"{productName} - {formattedQuantity} {unit}{priceInfo}";
+        }
+
+        private string RemoveColorTags(string input)
+        {
+            return Regex.Replace(input, @"<\/?color.*?>", string.Empty);
         }
 
         private void OnEditOrderClicked(object sender, EventArgs e)
