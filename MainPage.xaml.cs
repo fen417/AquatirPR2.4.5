@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
+using Plugin.LocalNotification;
 
 
 namespace Aquatir
@@ -22,6 +23,7 @@ namespace Aquatir
         public MainPage()
         {
             InitializeComponent();
+            ScheduleWeeklyNotification();
             bool isAuthorizationDisabled = Preferences.Get("AuthorizationDisabled", false);
             Preferences.Set("AuthorizationDisabled", false); // ЗАМЕНИТЬ НА FALSE ДЛЯ ВКЛЮЧЕНИЯ АВТОРИЗАЦИИ
             if (!Preferences.ContainsKey("ShowPackagedProducts"))
@@ -132,6 +134,32 @@ namespace Aquatir
 
             OrdersCollectionView.ItemsSource = _orders;
         }
+
+        private void ScheduleWeeklyNotification()
+        {
+            // Создаем уведомление
+            var notification = new NotificationRequest
+            {
+                NotificationId = 100,
+                Title = "Напоминание",
+                Description = "Завтра вторник, не забудьте заказать горячее копчение!",
+                Schedule = new NotificationRequestSchedule
+                {
+                    NotifyTime = GetNextMondayAt5PM(),
+                    RepeatType = NotificationRepeat.Weekly
+                }
+            };
+
+            LocalNotificationCenter.Current.Show(notification);
+        }
+
+        private DateTime GetNextMondayAt5PM()
+        {
+            var now = DateTime.Now;
+            var nextMonday = now.AddDays(((int)DayOfWeek.Monday - (int)now.DayOfWeek + 7) % 7);
+            return new DateTime(nextMonday.Year, nextMonday.Month, nextMonday.Day, 17, 0, 0);
+        }
+
         private void OnPrivatePersonCheckedChanged(object sender, CheckedChangedEventArgs e)
         {
             if (e.Value)
@@ -349,7 +377,6 @@ namespace Aquatir
             }
             return 0;
         }
-
         private async void OnGroupButtonClicked(object sender, EventArgs e)
         {
             Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
@@ -359,6 +386,23 @@ namespace Aquatir
             await Navigation.PushAsync(new ProductSelectionPage(groupName, this));
         }
 
+        private string NormalizeCustomerName(string inputName)
+        {
+            var customerNameMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        { "Акватир Григориополь", "И/П Дарануца" },
+        { "Акватории Григориополь", "И/П Дарануца" },
+        { "Гончаренко", "И/П Гончаренко" },
+        { "ИП - Романова", "И/П Романова" },
+        { "Галион", "Галион" }
+    };
+
+            // Возвращаем стандартизированное имя или исходное, если нет в словаре
+            string trimmedName = inputName.Trim();
+            return customerNameMap.TryGetValue(trimmedName, out string normalizedName)
+                ? normalizedName
+                : trimmedName;
+        }
         private async void OnFinishOrderClicked(object sender, EventArgs e)
         {
             // Проверка, что дата заказа не в прошлом
@@ -375,25 +419,7 @@ namespace Aquatir
                 return;
             }
 
-            string customerName = CustomerNameEntry.Text.Trim();
-
-            if (customerName.Equals("Акватир Григориополь", StringComparison.OrdinalIgnoreCase))
-            {
-                customerName = "И/П Дарануца";
-            }
-            else if (customerName.Equals("Акватир Бендеры", StringComparison.OrdinalIgnoreCase))
-            {
-                customerName = "И/П Гончаренко";
-            }
-            else if (customerName.Equals("Акватории Григориополь", StringComparison.OrdinalIgnoreCase))
-            {
-                customerName = "И/П Дарануца";
-            }
-            else if (customerName.Equals("ИП - Романова", StringComparison.OrdinalIgnoreCase))
-            {
-                customerName = "И/П Романова";
-            }
-
+            string customerName = NormalizeCustomerName(CustomerNameEntry.Text);
             _currentOrder.CustomerName = customerName;
             _currentOrder.Direction = DirectionPicker.SelectedItem?.ToString();
             _currentOrder.OrderDate = OrderDatePicker.Date;
@@ -510,7 +536,7 @@ namespace Aquatir
             }
         }
 
-        private async Task SendOrdersByEmail(List<Order> selectedOrders)
+        private void SendOrdersByEmail(List<Order> selectedOrders)
         {
             var groupOrder = ProductCache.CachedProducts.Keys.ToList();
             var ordersByDate = selectedOrders.GroupBy(o => o.OrderDate).ToList();
@@ -523,6 +549,8 @@ namespace Aquatir
 
                 var customerNames = orderGroup.Select(o => o.CustomerName).Distinct();
                 string orderDateText = orderGroup.Key.ToString("dd.MM.yyyy");
+                Console.WriteLine($"Sending email for date: {orderDateText}");
+
                 message.Subject = $"Заявка от {string.Join(", ", customerNames)} на {orderDateText}";
 
                 var bodyBuilder = new BodyBuilder();
@@ -557,14 +585,15 @@ namespace Aquatir
 
                     try
                     {
-                        await client.ConnectAsync("smtp.mail.ru", 465, true);
-                        await client.AuthenticateAsync("rep.1958@mail.ru", "zyxrhkQb4KwE0Udwz2cx");
-                        await client.SendAsync(message);
-                        await client.DisconnectAsync(true);
+                        client.Connect("smtp.mail.ru", 465, true);
+                        client.Authenticate("rep.1958@mail.ru", "zyxrhkQb4KwE0Udwz2cx");
+
+                        client.Send(message);
+                        client.Disconnect(true);
                     }
                     catch (Exception ex)
                     {
-                        await DisplayAlert("Ошибка", $"Не удалось отправить заказы: {ex.Message}", "OK");
+                        DisplayAlert("Ошибка", $"Не удалось отправить заказы: {ex.Message}", "OK");
                     }
                 }
             }
@@ -731,31 +760,27 @@ namespace Aquatir
         }
         private void UpdatePreview()
         {
-            var productDescriptions = _currentOrder.Products.Select(p => FormatProductString(p)).ToList();
+            // Оптимизация: получаем и форматируем продукты за один проход, и считаем сумму
+            var productDescriptions = new List<string>();
             decimal totalAmount = 0;
+
             foreach (var product in _currentOrder.Products)
             {
-                if (product.Name.EndsWith("ВЕС."))
-                {
-                    totalAmount += product.Quantity * product.PricePerKg;
-                }
-                else if (product.Name.EndsWith("УП."))
-                {
-                    totalAmount += product.Quantity * product.PricePerUnit;
-                }
-                else if (product.Name.EndsWith("КОНТ."))
-                {
-                    totalAmount += product.Quantity * product.PricePerCont;
-                }
-                else if (product.Name.EndsWith("ШТ."))
-                {
-                    totalAmount += product.Quantity * product.PricePerPiece;
-                }
-                else if (product.Name.EndsWith("В."))
-                {
-                    totalAmount += product.Quantity * product.PricePerVedro;
-                }
+                // Добавляем отформатированное описание продукта
+                productDescriptions.Add(FormatProductString(product));
+
+                // Подсчитываем общую сумму заказа
+                decimal price = 0;
+                if (product.Name.EndsWith("ВЕС.")) price = product.PricePerKg;
+                else if (product.Name.EndsWith("УП.")) price = product.PricePerUnit;
+                else if (product.Name.EndsWith("КОНТ.")) price = product.PricePerCont;
+                else if (product.Name.EndsWith("ШТ.")) price = product.PricePerPiece;
+                else if (product.Name.EndsWith("В.")) price = product.PricePerVedro;
+
+                totalAmount += product.Quantity * price;
             }
+
+            // Добавляем общую сумму, если включено отображение цен
             if (Preferences.Get("ShowPriceEnabled", false))
             {
                 productDescriptions.Add($"Сумма заказа: {totalAmount:N2} руб.");

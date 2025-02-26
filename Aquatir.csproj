@@ -137,14 +137,15 @@
   </ItemGroup>
   <!-- Зависимости -->
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Maui" Version="9.1.1" />
+    <PackageReference Include="CommunityToolkit.Maui" Version="11.1.0" />
     <PackageReference Include="Dropbox.Api" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.14" />
-    <PackageReference Include="Microsoft.Maui.Essentials" Version="9.0.14" />
-    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.14" />
-    <PackageReference Include="MailKit" Version="4.9.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.40" />
+    <PackageReference Include="Microsoft.Maui.Essentials" Version="9.0.40" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.40" />
+    <PackageReference Include="MailKit" Version="4.10.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Plugin.LocalNotification" Version="11.1.4" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Resources\Assets\sc250ke.png">

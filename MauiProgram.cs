@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Maui;
+using Plugin.LocalNotification;
 using Microsoft.Maui.LifecycleEvents;
-using Microsoft.Maui;
-using Microsoft.Maui.Hosting;
 
 namespace Aquatir
 {
@@ -13,6 +12,7 @@ namespace Aquatir
             builder
                 .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
+                .UseLocalNotification()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

@@ -8,19 +8,24 @@
         <StackLayout Orientation="Vertical" Spacing="5">
             <Label Text="Автоматический возврат в главное меню после выбора товара" FontSize="18" />
             <Switch x:Name="AutoReturnSwitch" Toggled="OnAutoReturnToggled" />
-           <!-- <Label Text="Отображать цену продукции" FontSize="18" />
+            <!-- <Label Text="Отображать цену продукции" FontSize="18" />
             <Switch x:Name="ShowPriceSwitch" Toggled="OnShowPriceToggled" /> -->
             <Label Text="Дополнительно отображать копчёную и вяленую продукцию так же и в упаковках (УП.)" FontSize="18" />
             <Switch x:Name="ShowPackagedProductsSwitch" Toggled="OnShowPackagedProductsToggled" />
             <Label Text="Скрыть цветовые подсказки в списке продукции (пример: пресервы)" FontSize="18" />
             <Switch x:Name="IgnoreColorsSwitch" IsToggled="{Binding IgnoreColorsSetting}" Toggled="OnIgnoreColorsToggled" />
-
-
         </StackLayout>
-        <Label Text="Версия программы: r2.5.3 от 24.02.2025" 
-        FontSize="14" 
-        HorizontalOptions="Center" 
-        VerticalOptions="EndAndExpand" 
-        Margin="0,20,0,0" />
+
+        <StackLayout VerticalOptions="EndAndExpand" Margin="0,20,0,0">
+            <Button Text="Что нового?" 
+                    Clicked="OnWhatsNewClicked" 
+                    FontSize="14" 
+                    HorizontalOptions="Center" 
+                    BackgroundColor="Transparent" 
+                    TextColor="Blue" />
+            <Label Text="Версия программы: r2.6.0 от 26.02.2025" 
+                   FontSize="14" 
+                   HorizontalOptions="Center" />
+        </StackLayout>
     </StackLayout>
 </ContentPage>
