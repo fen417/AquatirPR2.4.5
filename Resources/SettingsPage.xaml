@@ -23,7 +23,7 @@
                     HorizontalOptions="Center" 
                     BackgroundColor="Transparent" 
                     TextColor="Blue" />
-            <Label Text="Версия программы: r2.6.0 от 26.02.2025" 
+            <Label Text="Версия программы: r2.6.1 от 26.02.2025" 
                    FontSize="14" 
                    HorizontalOptions="Center" />
         </StackLayout>

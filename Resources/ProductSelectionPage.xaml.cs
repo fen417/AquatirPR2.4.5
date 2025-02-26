@@ -12,7 +12,42 @@ namespace Aquatir
 {
     public static class ProductCache
     {
-        public static Dictionary<string, List<ProductItem>> CachedProducts { get; set; } = new Dictionary<string, List<ProductItem>>();
+        private const string CacheKey = "CachedProducts";
+        private const string LastModifiedKey = "LastModified";
+
+        public static Dictionary<string, List<ProductItem>> CachedProducts { get; set; } = LoadCache();
+
+        public static DateTime LastModified { get; set; } = LoadLastModified();
+
+        public static void SaveCache()
+        {
+            var json = JsonConvert.SerializeObject(CachedProducts);
+            Preferences.Set(CacheKey, json);
+        }
+
+        public static void SaveLastModified(DateTime lastModified)
+        {
+            LastModified = lastModified;
+            Preferences.Set(LastModifiedKey, lastModified.ToString("O"));
+        }
+
+        private static Dictionary<string, List<ProductItem>> LoadCache()
+        {
+            var json = Preferences.Get(CacheKey, string.Empty);
+            if (string.IsNullOrEmpty(json))
+                return new Dictionary<string, List<ProductItem>>();
+
+            return JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(json);
+        }
+
+        private static DateTime LoadLastModified()
+        {
+            var lastModifiedString = Preferences.Get(LastModifiedKey, string.Empty);
+            if (DateTime.TryParse(lastModifiedString, out DateTime lastModified))
+                return lastModified;
+
+            return DateTime.MinValue;
+        }
     }
 
     public partial class ProductSelectionPage : ContentPage
@@ -45,23 +80,23 @@ namespace Aquatir
                 }
             }
 
-            if (!isCacheAvailable || (DateTime.Now - lastLoadTime).TotalHours >= 24)
+            // Проверяем, изменился ли файл на сервере
+            bool isFileModified = await IsFileModifiedOnServer();
+            if (!isCacheAvailable || isFileModified || (DateTime.Now - lastLoadTime).TotalHours >= 24)
             {
                 Console.WriteLine("Загрузка всех групп продукции...");
                 ShowLoadingIndicator();
 
                 var loadedProducts = await LoadAllProductsFromUrl();
-                foreach (var group in loadedProducts)
+                if (loadedProducts != null)
                 {
-                    // Проверяем, нужно ли обновить конкретную группу
-                    if (!ProductCache.CachedProducts.ContainsKey(group.Key) ||
-                        (DateTime.Now - lastLoadTime).TotalHours >= 24)
+                    foreach (var group in loadedProducts)
                     {
                         ProductCache.CachedProducts[group.Key] = group.Value;
                     }
+                    ProductCache.SaveCache(); // Сохраняем кэш
+                    Preferences.Set(loadTimeKey, DateTime.Now.ToString("O"));
                 }
-
-                Preferences.Set(loadTimeKey, DateTime.Now.ToString("O"));
             }
             else
             {
@@ -85,6 +120,38 @@ namespace Aquatir
 
             Console.WriteLine("Продукты загружены и отфильтрованы.");
             HideLoadingIndicator();
+        }
+
+        private async Task<bool> IsFileModifiedOnServer()
+        {
+            try
+            {
+                string fileUrl = await GetFileDownloadLinkFromYandex();
+                if (string.IsNullOrEmpty(fileUrl))
+                {
+                    Console.WriteLine("Не удалось получить ссылку для скачивания.");
+                    return false;
+                }
+
+                var request = new HttpRequestMessage(HttpMethod.Head, fileUrl); // Используем HEAD для получения заголовков
+                var response = await client.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var lastModifiedHeader = response.Content.Headers.LastModified;
+                    if (lastModifiedHeader.HasValue)
+                    {
+                        DateTime serverLastModified = lastModifiedHeader.Value.DateTime;
+                        return serverLastModified > ProductCache.LastModified; // Сравниваем с сохраненной датой
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при проверке изменений файла: {ex.Message}");
+            }
+
+            return false;
         }
 
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
@@ -122,25 +189,41 @@ namespace Aquatir
                 }
             }
         }
+
         private async Task<Dictionary<string, List<ProductItem>>> LoadAllProductsFromUrl()
         {
             string fileUrl = await GetFileDownloadLinkFromYandex();
             if (string.IsNullOrEmpty(fileUrl))
             {
                 Console.WriteLine("Не удалось получить ссылку для скачивания.");
-                return new Dictionary<string, List<ProductItem>>();
+                return null;
             }
 
             try
             {
-                var response = await client.GetStringAsync(fileUrl);
-                var productGroups = JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(response);
-                return productGroups ?? new Dictionary<string, List<ProductItem>>();
+                var response = await client.GetAsync(fileUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var lastModifiedHeader = response.Content.Headers.LastModified;
+                    if (lastModifiedHeader.HasValue)
+                    {
+                        ProductCache.SaveLastModified(lastModifiedHeader.Value.DateTime); // Сохраняем новую дату изменения
+                    }
+
+                    var content = await response.Content.ReadAsStringAsync();
+                    var productGroups = JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(content);
+                    return productGroups ?? new Dictionary<string, List<ProductItem>>();
+                }
+                else
+                {
+                    Console.WriteLine("Ошибка загрузки: " + response.StatusCode);
+                    return null;
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка загрузки: {ex.Message}");
-                return new Dictionary<string, List<ProductItem>>();
+                return null;
             }
         }
 
@@ -161,16 +244,14 @@ namespace Aquatir
             var selectedProduct = e.CurrentSelection.FirstOrDefault() as ProductItem;
             if (selectedProduct != null)
             {
-                // Удаление тегов <color> и </color> из имени продукта
                 string cleanProductName = Regex.Replace(selectedProduct.Name, @"<\/?color.*?>", string.Empty);
                 _mainPage.SaveSelectedOrderDate();
 
-                if (DeviceInfo.Platform == DevicePlatform.WinUI) // Для Windows (WinUI)
+                if (DeviceInfo.Platform == DevicePlatform.WinUI)
                 {
                     var quantityPopup = new QuantityInputPopup();
                     quantityPopup.QuantityConfirmed += async (sender, quantity) =>
                     {
-                        // Добавляем продукт в заказ
                         _mainPage.AddProductToOrder(cleanProductName, quantity);
 
                         if (Preferences.Get("AutoReturnEnabled", false))
@@ -189,7 +270,6 @@ namespace Aquatir
                         result = result.Replace(",", ".");
                         if (decimal.TryParse(result, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal quantity) && quantity > 0)
                         {
-                            // Добавляем продукт в заказ
                             _mainPage.AddProductToOrder(cleanProductName, quantity);
                             await DisplayAlert("Успех", $"{cleanProductName} успешно добавлен(а) в заказ.", "OK");
 
@@ -208,7 +288,6 @@ namespace Aquatir
                 ProductCollectionView.SelectedItem = null;
             }
         }
-
 
         public class QuantityInputPopup : Popup
         {
@@ -294,6 +373,7 @@ namespace Aquatir
                 }
             }
         }
+
         private async void OnBackButtonClicked(object sender, EventArgs e)
         {
             await Navigation.PopAsync();

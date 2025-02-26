@@ -24,8 +24,9 @@ namespace Aquatir
         {
             InitializeComponent();
             ScheduleWeeklyNotification();
+            CheckMissedNotification();
             bool isAuthorizationDisabled = Preferences.Get("AuthorizationDisabled", false);
-            Preferences.Set("AuthorizationDisabled", false); // ЗАМЕНИТЬ НА FALSE ДЛЯ ВКЛЮЧЕНИЯ АВТОРИЗАЦИИ
+            Preferences.Set("AuthorizationDisabled", false);
             if (!Preferences.ContainsKey("ShowPackagedProducts"))
             {
                 Preferences.Set("ShowPackagedProducts", true);
@@ -151,6 +152,7 @@ namespace Aquatir
             };
 
             LocalNotificationCenter.Current.Show(notification);
+
         }
 
         private DateTime GetNextMondayAt5PM()
@@ -158,6 +160,34 @@ namespace Aquatir
             var now = DateTime.Now;
             var nextMonday = now.AddDays(((int)DayOfWeek.Monday - (int)now.DayOfWeek + 7) % 7);
             return new DateTime(nextMonday.Year, nextMonday.Month, nextMonday.Day, 17, 0, 0);
+        }
+        private void CheckMissedNotification()
+        {
+            var now = DateTime.Now;
+            var lastNotificationDate = Preferences.Get("LastNotificationDate", DateTime.MinValue);
+
+            // Если сегодня понедельник и уведомление еще не было показано
+            if (now.DayOfWeek == DayOfWeek.Monday && lastNotificationDate.Date != now.Date)
+            {
+                ShowNotification();
+                Preferences.Set("LastNotificationDate", now.Date); // Запоминаем, что уведомление показано
+            }
+        }
+
+        private void ShowNotification()
+        {
+            var notification = new NotificationRequest
+            {
+                NotificationId = 101,
+                Title = "Напоминание",
+                Description = "Завтра вторник, не забудьте заказать горячее копчение!",
+                Schedule = new NotificationRequestSchedule
+                {
+                    NotifyTime = DateTime.Now.AddSeconds(1) // Показываем сразу при старте
+                }
+            };
+
+            LocalNotificationCenter.Current.Show(notification);
         }
 
         private void OnPrivatePersonCheckedChanged(object sender, CheckedChangedEventArgs e)
