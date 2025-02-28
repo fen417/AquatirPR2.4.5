@@ -46,6 +46,9 @@ namespace Aquatir
         private async void OnWhatsNewClicked(object sender, EventArgs e)
         {
             string patchNotes = @"
+Что нового в версии r2.6.2:
+- Исправления ошибок и оптимизация приложения
+
 Что нового в версии r2.6.1:
 - Изменён и оптимизирован способ загрузки списка продукции
 

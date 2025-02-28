@@ -277,6 +277,16 @@ namespace Aquatir
                     }
                 }
             }
+
+            // Использование загруженных данных о продукции
+            if (ProductCache.CachedProducts != null && ProductCache.CachedProducts.Count > 0)
+            {
+                Console.WriteLine("Продукция уже загружена, можно использовать данные.");
+            }
+            else
+            {
+                Console.WriteLine("Продукция не загружена, возможно, произошла ошибка.");
+            }
         }
 
         protected override void OnDisappearing()

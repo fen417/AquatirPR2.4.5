@@ -1,61 +1,19 @@
 using CommunityToolkit.Maui.Views;
-using Newtonsoft.Json;
-using Microsoft.Maui.Storage;
 using Microsoft.Maui.Controls;
-using System.Drawing;
-using CommunityToolkit.Maui.Core.Extensions;
-using Microsoft.Maui.Devices;
-using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Storage;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Aquatir
 {
-    public static class ProductCache
-    {
-        private const string CacheKey = "CachedProducts";
-        private const string LastModifiedKey = "LastModified";
-
-        public static Dictionary<string, List<ProductItem>> CachedProducts { get; set; } = LoadCache();
-
-        public static DateTime LastModified { get; set; } = LoadLastModified();
-
-        public static void SaveCache()
-        {
-            var json = JsonConvert.SerializeObject(CachedProducts);
-            Preferences.Set(CacheKey, json);
-        }
-
-        public static void SaveLastModified(DateTime lastModified)
-        {
-            LastModified = lastModified;
-            Preferences.Set(LastModifiedKey, lastModified.ToString("O"));
-        }
-
-        private static Dictionary<string, List<ProductItem>> LoadCache()
-        {
-            var json = Preferences.Get(CacheKey, string.Empty);
-            if (string.IsNullOrEmpty(json))
-                return new Dictionary<string, List<ProductItem>>();
-
-            return JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(json);
-        }
-
-        private static DateTime LoadLastModified()
-        {
-            var lastModifiedString = Preferences.Get(LastModifiedKey, string.Empty);
-            if (DateTime.TryParse(lastModifiedString, out DateTime lastModified))
-                return lastModified;
-
-            return DateTime.MinValue;
-        }
-    }
-
     public partial class ProductSelectionPage : ContentPage
     {
         private readonly string _groupName;
         private readonly MainPage _mainPage;
-        private const string LastLoadTimeKey = "LastLoadTime_";
-        private static readonly HttpClient client = new HttpClient(); // Используем один экземпляр HttpClient
 
         public ProductSelectionPage(string groupName, MainPage mainPage)
         {
@@ -65,44 +23,8 @@ namespace Aquatir
             LoadProducts();
         }
 
-        public async void LoadProducts()
+        public void LoadProducts()
         {
-            string loadTimeKey = LastLoadTimeKey + _groupName;
-            bool isCacheAvailable = ProductCache.CachedProducts.ContainsKey(_groupName);
-            DateTime lastLoadTime = DateTime.MinValue;
-
-            if (Preferences.ContainsKey(loadTimeKey))
-            {
-                string lastLoadTimeString = Preferences.Get(loadTimeKey, string.Empty);
-                if (!string.IsNullOrEmpty(lastLoadTimeString) && DateTime.TryParse(lastLoadTimeString, out DateTime parsedTime))
-                {
-                    lastLoadTime = parsedTime;
-                }
-            }
-
-            // Проверяем, изменился ли файл на сервере
-            bool isFileModified = await IsFileModifiedOnServer();
-            if (!isCacheAvailable || isFileModified || (DateTime.Now - lastLoadTime).TotalHours >= 24)
-            {
-                Console.WriteLine("Загрузка всех групп продукции...");
-                ShowLoadingIndicator();
-
-                var loadedProducts = await LoadAllProductsFromUrl();
-                if (loadedProducts != null)
-                {
-                    foreach (var group in loadedProducts)
-                    {
-                        ProductCache.CachedProducts[group.Key] = group.Value;
-                    }
-                    ProductCache.SaveCache(); // Сохраняем кэш
-                    Preferences.Set(loadTimeKey, DateTime.Now.ToString("O"));
-                }
-            }
-            else
-            {
-                Console.WriteLine("Использование кэшированных данных.");
-            }
-
             bool showPackagedProducts = Preferences.Get("ShowPackagedProducts", true);
 
             var filteredProducts = ProductCache.CachedProducts.ContainsKey(_groupName)
@@ -122,38 +44,6 @@ namespace Aquatir
             HideLoadingIndicator();
         }
 
-        private async Task<bool> IsFileModifiedOnServer()
-        {
-            try
-            {
-                string fileUrl = await GetFileDownloadLinkFromYandex();
-                if (string.IsNullOrEmpty(fileUrl))
-                {
-                    Console.WriteLine("Не удалось получить ссылку для скачивания.");
-                    return false;
-                }
-
-                var request = new HttpRequestMessage(HttpMethod.Head, fileUrl); // Используем HEAD для получения заголовков
-                var response = await client.SendAsync(request);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var lastModifiedHeader = response.Content.Headers.LastModified;
-                    if (lastModifiedHeader.HasValue)
-                    {
-                        DateTime serverLastModified = lastModifiedHeader.Value.DateTime;
-                        return serverLastModified > ProductCache.LastModified; // Сравниваем с сохраненной датой
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка при проверке изменений файла: {ex.Message}");
-            }
-
-            return false;
-        }
-
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
             string searchText = e.NewTextValue?.Trim() ?? string.Empty;
@@ -164,67 +54,6 @@ namespace Aquatir
                 : new List<ProductItem>();
 
             ProductCollectionView.ItemsSource = filteredProducts;
-        }
-
-        private async Task<string> GetFileDownloadLinkFromYandex()
-        {
-            string yandexFilePath = "/productsCOLOR.json";  // Путь к файлу на Яндекс.Диске
-            string token = "y0_AgAAAAB4zZe6AAzBewAAAAEYCy0wAAABOYgsBbpL6pQDgfd6pphTlGUu3Q";  // OAuth токен
-
-            using (var client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Add("Authorization", $"OAuth {token}");
-
-                var response = await client.GetAsync($"https://cloud-api.yandex.net/v1/disk/resources/download?path={Uri.EscapeDataString(yandexFilePath)}");
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var json = JsonConvert.DeserializeObject<dynamic>(content);
-                    return json.href;
-                }
-                else
-                {
-                    Console.WriteLine("Ошибка получения ссылки для скачивания: " + response.StatusCode);
-                    return null;
-                }
-            }
-        }
-
-        private async Task<Dictionary<string, List<ProductItem>>> LoadAllProductsFromUrl()
-        {
-            string fileUrl = await GetFileDownloadLinkFromYandex();
-            if (string.IsNullOrEmpty(fileUrl))
-            {
-                Console.WriteLine("Не удалось получить ссылку для скачивания.");
-                return null;
-            }
-
-            try
-            {
-                var response = await client.GetAsync(fileUrl);
-                if (response.IsSuccessStatusCode)
-                {
-                    var lastModifiedHeader = response.Content.Headers.LastModified;
-                    if (lastModifiedHeader.HasValue)
-                    {
-                        ProductCache.SaveLastModified(lastModifiedHeader.Value.DateTime); // Сохраняем новую дату изменения
-                    }
-
-                    var content = await response.Content.ReadAsStringAsync();
-                    var productGroups = JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(content);
-                    return productGroups ?? new Dictionary<string, List<ProductItem>>();
-                }
-                else
-                {
-                    Console.WriteLine("Ошибка загрузки: " + response.StatusCode);
-                    return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка загрузки: {ex.Message}");
-                return null;
-            }
         }
 
         private void ShowLoadingIndicator()
