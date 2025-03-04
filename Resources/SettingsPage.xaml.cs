@@ -46,6 +46,10 @@ namespace Aquatir
         private async void OnWhatsNewClicked(object sender, EventArgs e)
         {
             string patchNotes = @"
+Что нового в версии r2.7.0:
+- Добавлена группа 'Вся продукция', содержащая полный список продукции
+- Улучшения интерфейса 
+
 Что нового в версии r2.6.2:
 - Исправления ошибок и оптимизация приложения
 

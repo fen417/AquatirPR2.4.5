@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.aquatir.app" android:versionCode="2620" android:versionName="Russian Sturgeon">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.aquatir.app" android:versionCode="2700" android:versionName="Russian Sturgeon">
 	<application android:allowBackup="true" android:icon="@mipmap/aq" android:supportsRtl="true" android:label="Aquatir Заявки"></application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />

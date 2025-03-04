@@ -1,11 +1,10 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:system="clr-namespace:System;assembly=netstandard"
              xmlns:converters="clr-namespace:Aquatir.Converters"
              x:Class="Aquatir.MainPage"
              Title="Aquatir">
-    
+
     <ContentPage.ToolbarItems>
         <ToolbarItem IconImageSource="question.png" Order="Primary" Clicked="OnHelpClicked" />
     </ContentPage.ToolbarItems>
@@ -20,8 +19,12 @@
         <StackLayout Padding="10">
 
             <Label Text="Выберите направление:" FontAttributes="Bold" FontSize="18" Margin="0,10,0,5" IsVisible="{Binding ShowCityPicker}" />
-            <Frame  IsVisible="{Binding ShowCityPicker}" BackgroundColor="{OnPlatform Android='White', Default='Transparent'}" BorderColor="{OnPlatform Android='LightGray', Default='Transparent'}" CornerRadius="5" Padding="5,10" HasShadow="False">
-                <Grid>
+            <Border IsVisible="{Binding ShowCityPicker}" 
+                    BackgroundColor="{OnPlatform Android='White', Default='Transparent'}" 
+                    Stroke="{OnPlatform Android='LightGray', Default='Transparent'}" 
+                    StrokeThickness="1" 
+                    StrokeShape="RoundRectangle 5">
+                <Grid Padding="5,10">
                     <Picker x:Name="DirectionPicker" SelectedIndexChanged="OnDirectionChanged" Title="">
                         <Picker.Items>
                             <x:String>Тирасполь</x:String>
@@ -31,28 +34,34 @@
                         </Picker.Items>
                     </Picker>
                 </Grid>
-            </Frame>
+            </Border>
 
             <Label Text="Выберите заказчика или введите имя вручную:" FontAttributes="Bold" FontSize="18" Margin="0,10,0,5" IsVisible="{Binding ShowCityPicker}" />
-            <Frame  IsVisible="{Binding ShowCityPicker}" BackgroundColor="{OnPlatform Android='White', Default='Transparent'}" BorderColor="{OnPlatform Android='LightGray', Default='Transparent'}" CornerRadius="5" Padding="5,10" HasShadow="False">
-                <Picker x:Name="CustomerPicker" Title="" SelectedIndexChanged="OnCustomerSelected" />
-            </Frame>
+            <Border IsVisible="{Binding ShowCityPicker}" 
+                    BackgroundColor="{OnPlatform Android='White', Default='Transparent'}" 
+                    Stroke="{OnPlatform Android='LightGray', Default='Transparent'}" 
+                    StrokeThickness="1" 
+                    StrokeShape="RoundRectangle 5">
+                <Grid Padding="5,10">
+                    <Picker x:Name="CustomerPicker" Title="" SelectedIndexChanged="OnCustomerSelected" />
+                </Grid>
+            </Border>
 
             <Entry x:Name="CustomerNameEntry" 
-       Placeholder="Введите имя заказчика..." 
-       FontAttributes="Italic"
-       FontSize="16"
-       Margin="0,10,0,10" 
-       TextChanged="OnCustomerNameEntryTextChanged" />
+                   Placeholder="Введите имя заказчика..." 
+                   FontAttributes="Italic"
+                   FontSize="16"
+                   Margin="0,10,0,10" 
+                   TextChanged="OnCustomerNameEntryTextChanged" />
 
             <StackLayout Orientation="Horizontal" VerticalOptions="Center" Spacing="0">
                 <CheckBox x:Name="IsPrivatePersonCheckBox" 
-              IsVisible="{Binding IsManager}" 
-              CheckedChanged="OnPrivatePersonCheckedChanged" />
+                          IsVisible="{Binding IsManager}" 
+                          CheckedChanged="OnPrivatePersonCheckedChanged" />
                 <Label Text="на частное лицо" 
-           IsVisible="{Binding IsManager}" 
-           VerticalOptions="Center" 
-           FontSize="16">
+                       IsVisible="{Binding IsManager}" 
+                       VerticalOptions="Center" 
+                       FontSize="16">
                     <Label.Margin>
                         <OnPlatform x:TypeArguments="Thickness">
                             <On Platform="WinUI" Value="-80,0,0,0" />
@@ -65,12 +74,12 @@
             <Label Text="Заказ заявки на:" FontAttributes="Bold" FontSize="18" Margin="0,10,0,5" />
             <DatePicker x:Name="OrderDatePicker" Date="{x:Static system:DateTime.Now}" />
 
-            <Label Text="Выберите нужный товар:" 
-               FontAttributes="Italic"
-               FontSize="18"
-               Margin="0,10" />
+            <Label Text="Выберите группу товаров:" 
+                   FontAttributes="Italic"
+                   FontSize="18"
+                   Margin="0,10" />
 
-            <StackLayout Orientation="Vertical" Spacing="10">
+            <StackLayout x:Name="GroupButtonsStackLayout" Orientation="Vertical" Spacing="10">
                 <Button Text="Холодное Копчение" Clicked="OnGroupButtonClicked" FontAttributes="Bold" FontSize="18" />
                 <Button Text="Солёная Продукция" Clicked="OnGroupButtonClicked" FontAttributes="Bold" FontSize="18" />
                 <Button Text="Вяленая Продукция" Clicked="OnGroupButtonClicked" FontAttributes="Bold" FontSize="18" />
@@ -80,14 +89,13 @@
                 <Button Text="Креветки и Морепродукты" Clicked="OnGroupButtonClicked" FontAttributes="Bold" FontSize="18" />
                 <Button Text="Мороженная Продукция" Clicked="OnGroupButtonClicked" FontAttributes="Bold" FontSize="18" />
                 <Button Text="Расходники (пакеты, перчатки и т.п.)" Clicked="OnGroupButtonClicked" FontAttributes="Bold" FontSize="18" />
-                <!-- VARA <Button Text="Готовая Продукция" Clicked="OnGroupButtonClicked" FontAttributes="Bold" FontSize="18" />
-                <Button Text="Мороженная Продукция" Clicked="OnGroupButtonClicked" FontAttributes="Bold" FontSize="18" VARA /> -->
+                <Button Text="Вся продукция" Clicked="OnAllProductsButtonClicked" FontAttributes="Bold" FontSize="18" />
             </StackLayout>
 
             <Label Text="Текущий заказ:" 
-               FontAttributes="Italic"
-               FontSize="18"
-               Margin="0,20,0,5" />
+                   FontAttributes="Italic"
+                   FontSize="18"
+                   Margin="0,20,0,5" />
             <CollectionView x:Name="PreviewCollectionView">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
@@ -112,9 +120,9 @@
             <Button Text="Завершить заказ" Clicked="OnFinishOrderClicked" FontAttributes="Bold"  Margin="0,10" FontSize="18" />
 
             <Label Text="Завершенные заказы:" 
-               FontAttributes="Italic"
-               FontSize="18"
-               Margin="0,20,0,5" />
+                   FontAttributes="Italic"
+                   FontSize="18"
+                   Margin="0,20,0,5" />
             <CollectionView x:Name="OrdersCollectionView" SelectionMode="Multiple">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
@@ -133,10 +141,10 @@
             <Button Text="Настройки" Clicked="OnSettingsClicked" FontAttributes="Bold" FontSize="18" Margin="0,10"  IsVisible="{OnPlatform WinUI=true, Default=false}"/>
 
             <Label Text="2025г. ©Aquatir" 
-               FontSize="14" 
-               HorizontalOptions="Center" 
-               VerticalOptions="EndAndExpand" 
-               Margin="0,20,0,0" />
+                   FontSize="14" 
+                   HorizontalOptions="Center" 
+                   VerticalOptions="EndAndExpand" 
+                   Margin="0,20,0,0" />
         </StackLayout>
     </ScrollView>
 </ContentPage>

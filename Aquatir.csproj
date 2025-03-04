@@ -116,9 +116,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release1|net9.0-android|AnyCPU'">
     <EnableLLVM>False</EnableLLVM>
+    <RunAOTCompilation>True</RunAOTCompilation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release1|net9.0-android|ARM64'">
     <EnableLLVM>False</EnableLLVM>
+    <RunAOTCompilation>True</RunAOTCompilation>
   </PropertyGroup>
   <ItemGroup>
     <MauiIcon Include="Resources\AppIcon\aq.png" Color="#512BD4" />

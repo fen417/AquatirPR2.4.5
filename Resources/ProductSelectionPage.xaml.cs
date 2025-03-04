@@ -4,7 +4,6 @@ using Microsoft.Maui.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -27,16 +26,36 @@ namespace Aquatir
         {
             bool showPackagedProducts = Preferences.Get("ShowPackagedProducts", true);
 
-            var filteredProducts = ProductCache.CachedProducts.ContainsKey(_groupName)
-                ? ProductCache.CachedProducts[_groupName].Where(product =>
-                {
-                    if ((_groupName == "Холодное Копчение" || _groupName == "Вяленая Продукция") && !showPackagedProducts)
+            List<ProductItem> filteredProducts;
+            ShowLoadingIndicator();
+            if (_groupName == "Вся продукция")
+            {
+                // Используем уже загруженные продукты
+                filteredProducts = ProductCache.CachedProducts.Values
+                    .SelectMany(products => products)
+                    .Where(product =>
                     {
-                        return !product.Name.EndsWith("УП.", StringComparison.OrdinalIgnoreCase);
-                    }
-                    return true;
-                }).ToList()
-                : new List<ProductItem>();
+                        if (!showPackagedProducts)
+                        {
+                            return !product.Name.EndsWith("УП.", StringComparison.OrdinalIgnoreCase);
+                        }
+                        return true;
+                    }).ToList();
+            }
+            else
+            {
+                // Фильтруем продукты для конкретной группы
+                filteredProducts = ProductCache.CachedProducts.ContainsKey(_groupName)
+                    ? ProductCache.CachedProducts[_groupName].Where(product =>
+                    {
+                        if ((_groupName == "Холодное Копчение" || _groupName == "Вяленая Продукция") && !showPackagedProducts)
+                        {
+                            return !product.Name.EndsWith("УП.", StringComparison.OrdinalIgnoreCase);
+                        }
+                        return true;
+                    }).ToList()
+                    : new List<ProductItem>();
+            }
 
             ProductCollectionView.ItemsSource = filteredProducts;
 
@@ -47,11 +66,24 @@ namespace Aquatir
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
             string searchText = e.NewTextValue?.Trim() ?? string.Empty;
-            var filteredProducts = ProductCache.CachedProducts.ContainsKey(_groupName)
-                ? ProductCache.CachedProducts[_groupName].Where(product =>
-                    string.IsNullOrEmpty(searchText) ||
-                    product.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)).ToList()
-                : new List<ProductItem>();
+            List<ProductItem> filteredProducts;
+
+            if (_groupName == "Вся продукция")
+            {
+                filteredProducts = ProductCache.CachedProducts.Values
+                    .SelectMany(products => products)
+                    .Where(product => string.IsNullOrEmpty(searchText) ||
+                                      product.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+            else
+            {
+                filteredProducts = ProductCache.CachedProducts.ContainsKey(_groupName)
+                    ? ProductCache.CachedProducts[_groupName].Where(product =>
+                        string.IsNullOrEmpty(searchText) ||
+                        product.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)).ToList()
+                    : new List<ProductItem>();
+            }
 
             ProductCollectionView.ItemsSource = filteredProducts;
         }

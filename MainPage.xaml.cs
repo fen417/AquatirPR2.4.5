@@ -10,7 +10,6 @@ using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
 using Plugin.LocalNotification;
 
-
 namespace Aquatir
 {
     public partial class MainPage : ContentPage
@@ -20,6 +19,7 @@ namespace Aquatir
         private Dictionary<string, List<string>> _customersByDirection;
         public bool ShowCityPicker { get; set; }
         public bool IsManager { get; set; }
+
         public MainPage()
         {
             InitializeComponent();
@@ -27,110 +27,54 @@ namespace Aquatir
             CheckMissedNotification();
             bool isAuthorizationDisabled = Preferences.Get("AuthorizationDisabled", false);
             Preferences.Set("AuthorizationDisabled", false);
+
             if (!Preferences.ContainsKey("ShowPackagedProducts"))
             {
                 Preferences.Set("ShowPackagedProducts", true);
             }
-            bool isShowPackagedProductsEnabled = Preferences.Get("ShowPackagedProducts", true);
+
             IsManager = Preferences.Get("AuthorizationType", string.Empty) == "Manager";
-            if (isAuthorizationDisabled)
+            ShowCityPicker = isAuthorizationDisabled || IsManager;
+
+            if (!ShowCityPicker)
             {
-                ShowCityPicker = true;
-            }
-            else
-            {
-                string authType = Preferences.Get("AuthorizationType", "User");
-                ShowCityPicker = authType == "Manager";
-                if (!ShowCityPicker)
+                string userCity = Preferences.Get("UserCity", string.Empty);
+                string userShopName = Preferences.Get("UserShopName", string.Empty);
+
+                if (!string.IsNullOrWhiteSpace(userCity))
+                    DirectionPicker.SelectedItem = userCity;
+
+                if (!string.IsNullOrWhiteSpace(userShopName))
+                    CustomerNameEntry.Text = userShopName;
+
+                var validShops = new List<string>
                 {
-                    string userCity = Preferences.Get("UserCity", string.Empty);
-                    string userShopName = Preferences.Get("UserShopName", string.Empty);
+                    "ип - романова", "акватории григориополь", "акватир григориополь",
+                    "галион", "акватир бендеры"
+                };
 
-                    if (!string.IsNullOrWhiteSpace(userCity))
-                        DirectionPicker.SelectedItem = userCity;
-
-                    if (!string.IsNullOrWhiteSpace(userShopName))
-                        CustomerNameEntry.Text = userShopName;
-
-                    var validShops = new List<string>
-            {
-                "ип - романова", "акватории григориополь", "акватир григориополь",
-                "галион", "акватир бендеры"
-            };
-
-                    // Сравниваем в нижнем регистре
-                    if (validShops.Contains(userShopName.ToLower()))
-                    {
-                        OrderDatePicker.Date = DateTime.Now.AddDays(1);
-                    }
-                    else
-                    {
-                        OrderDatePicker.Date = DateTime.Now;
-                    }
-                }
+                OrderDatePicker.Date = validShops.Contains(userShopName.ToLower()) ? DateTime.Now.AddDays(1) : DateTime.Now;
             }
+
             BindingContext = this;
 
-        _customersByDirection = new Dictionary<string, List<string>>
+            _customersByDirection = new Dictionary<string, List<string>>
             {
                 { "Тирасполь", new List<string> {
-                    "Агора Бородино", 
-                    "Агора Зелинского",
-                    "Агора Краснодонская",
-                    "Агора Юности",
-                    "Агора Чкалова",
-                    "БМК - 2",
-                    "БМК - 31",
-                    "Динисалл Каховская",
-                    "Динисалл Краснодонская",
-                    "Динисалл Палома",
-                    "Динисалл Фортуна",
-                    "И/П Насиковский",
-                    "И/П Сырбул",
-                    "И/П Хаджи",
-                    "И/П Кобзарь",
-                    "ООО Наполи (р-н Джорджия)",
-                    "Сигл Комета",
-                    "Сигл Ларионова",
-                    "У Семёныча",
-                    "Фагот",
-                    "Эверест",
-                    "Эндис"
-                    }
-                },
+                    "Агора Бородино", "Агора Зелинского", "Агора Краснодонская", "Агора Юности", "Агора Чкалова",
+                    "БМК - 2", "БМК - 31", "Динисалл Каховская", "Динисалл Краснодонская", "Динисалл Палома",
+                    "Динисалл Фортуна", "И/П Насиковский", "И/П Сырбул", "И/П Хаджи", "И/П Кобзарь",
+                    "ООО Наполи (р-н Джорджия)", "Сигл Комета", "Сигл Ларионова", "У Семёныча", "Фагот",
+                    "Эверест", "Эндис"
+                }},
                 { "Бендеры", new List<string> {
-                    "Агора Гиска",
-                    "БМК - 4",
-                    "БМК - 9",
-                    "БМК - 24",
-                    "БМК - 29",
-                    "БМК - 30",
-                    "Динисалл Победы",
-                    "Динисалл Салют",
-                    "Динисалл Социальный",
-                    "И/П Балан",
-                    "И/П Белая",
-                    "И/П Березина",
-                    "И/П Грек",
-                    "И/П Новойдарская",
-                    "И/П Новойдарский",
-                    "И/П Эдигер",
-                    "Ильина",
-                    "Шишкин",
-                    "ЮГ 1",
-                    "ЮГ 2",
-                    "ЮГ 3",
-                    "ЮГ 4",
-                    "ЮГ 5",
-                    "ЮГ 7",
-                    "ЮГ 8"
-                } },
-                { "Григориополь", new List<string> {
-                    "Дарануца",
-                } },
-                { "Самовывоз", new List<string> {
-                    "",
-                } }
+                    "Агора Гиска", "БМК - 4", "БМК - 9", "БМК - 24", "БМК - 29", "БМК - 30",
+                    "Динисалл Победы", "Динисалл Салют", "Динисалл Социальный", "И/П Балан", "И/П Белая",
+                    "И/П Березина", "И/П Грек", "И/П Новойдарская", "И/П Новойдарский", "И/П Эдигер",
+                    "Ильина", "Шишкин", "ЮГ 1", "ЮГ 2", "ЮГ 3", "ЮГ 4", "ЮГ 5", "ЮГ 7", "ЮГ 8"
+                }},
+                { "Григориополь", new List<string> { "Дарануца" } },
+                { "Самовывоз", new List<string> { "" } }
             };
 
             OrdersCollectionView.ItemsSource = _orders;
@@ -138,7 +82,6 @@ namespace Aquatir
 
         private void ScheduleWeeklyNotification()
         {
-            // Создаем уведомление
             var notification = new NotificationRequest
             {
                 NotificationId = 100,
@@ -152,7 +95,6 @@ namespace Aquatir
             };
 
             LocalNotificationCenter.Current.Show(notification);
-
         }
 
         private DateTime GetNextMondayAt5PM()
@@ -161,16 +103,16 @@ namespace Aquatir
             var nextMonday = now.AddDays(((int)DayOfWeek.Monday - (int)now.DayOfWeek + 7) % 7);
             return new DateTime(nextMonday.Year, nextMonday.Month, nextMonday.Day, 17, 0, 0);
         }
+
         private void CheckMissedNotification()
         {
             var now = DateTime.Now;
             var lastNotificationDate = Preferences.Get("LastNotificationDate", DateTime.MinValue);
 
-            // Если сегодня понедельник и уведомление еще не было показано
             if (now.DayOfWeek == DayOfWeek.Monday && lastNotificationDate.Date != now.Date)
             {
                 ShowNotification();
-                Preferences.Set("LastNotificationDate", now.Date); // Запоминаем, что уведомление показано
+                Preferences.Set("LastNotificationDate", now.Date);
             }
         }
 
@@ -183,24 +125,61 @@ namespace Aquatir
                 Description = "Завтра вторник, не забудьте заказать горячее копчение!",
                 Schedule = new NotificationRequestSchedule
                 {
-                    NotifyTime = DateTime.Now.AddSeconds(1) // Показываем сразу при старте
+                    NotifyTime = DateTime.Now.AddSeconds(1)
                 }
             };
 
             LocalNotificationCenter.Current.Show(notification);
         }
 
+        private bool HasGroupBeenVisited(string groupName)
+        {
+            return Preferences.Get($"GroupVisited_{groupName}", false);
+        }
+
+        private void MarkGroupAsVisited(string groupName)
+        {
+            Preferences.Set($"GroupVisited_{groupName}", true);
+        }
+
+        private void UpdateGroupBorderColor(Button button, string groupName)
+        {
+            if (groupName == "Вся продукция") return;
+
+            if (HasNewProducts(groupName) && !HasGroupBeenVisited(groupName))
+            {
+                button.BorderColor = Colors.YellowGreen;
+                button.BorderWidth = 4;
+            }
+            else
+            {
+                button.BorderColor = Colors.Transparent;
+                button.BorderWidth = 0;
+            }
+        }
+
         private void OnPrivatePersonCheckedChanged(object sender, CheckedChangedEventArgs e)
         {
             if (e.Value)
             {
-                CustomerNameEntry.Text = CustomerNameEntry.Text + " на частное лицо";
+                CustomerNameEntry.Text += " на частное лицо";
             }
             else
             {
-                if (CustomerNameEntry.Text.Contains(" на частное лицо"))
+                CustomerNameEntry.Text = CustomerNameEntry.Text.Replace(" на частное лицо", string.Empty);
+            }
+        }
+
+        private void MarkAllProductsInGroupAsSeen(string groupName)
+        {
+            if (ProductCache.CachedProducts.ContainsKey(groupName))
+            {
+                foreach (var product in ProductCache.CachedProducts[groupName])
                 {
-                    CustomerNameEntry.Text = CustomerNameEntry.Text.Replace(" на частное лицо", string.Empty);
+                    if (product.IsNew)
+                    {
+                        MarkProductAsSeen(product.Name);
+                    }
                 }
             }
         }
@@ -215,6 +194,12 @@ namespace Aquatir
             {
                 Console.WriteLine("ProductSelectionPage не активен. Невозможно обновить продукты.");
             }
+        }
+
+        private async void OnAllProductsButtonClicked(object sender, EventArgs e)
+        {
+            Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
+            await Navigation.PushAsync(new ProductSelectionPage("Вся продукция", this));
         }
 
         private void OnDirectionChanged(object sender, EventArgs e)
@@ -236,17 +221,236 @@ namespace Aquatir
             }
         }
 
+        private void MarkProductAsSeen(string productName)
+        {
+            Preferences.Set($"ProductSeen_{productName}", true);
+        }
+
+        private bool HasProductBeenSeen(string productName)
+        {
+            return Preferences.Get($"ProductSeen_{productName}", false);
+        }
+
+        private bool HasNewProducts(string groupName)
+        {
+            if (ProductCache.CachedProducts.ContainsKey(groupName))
+            {
+                return ProductCache.CachedProducts[groupName]
+                    .Any(product => product.IsNew && !HasProductBeenSeen(product.Name));
+            }
+            return false;
+        }
+
         public void SaveSelectedOrderDate()
         {
             Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
         }
-        protected override void OnAppearing()
+
+        private async Task CheckForNewProductsAsync()
+        {
+            await Task.Run(() =>
+            {
+                foreach (var group in ProductCache.CachedProducts)
+                {
+                    if (group.Value.Any(product => product.IsNew && !HasProductBeenSeen(product.Name)))
+                    {
+                        Device.BeginInvokeOnMainThread(() =>
+                        {
+                            var button = GroupButtonsStackLayout.Children
+                                .OfType<Button>()
+                                .FirstOrDefault(b => b.Text == group.Key);
+                            if (button != null)
+                            {
+                                UpdateGroupBorderColor(button, group.Key);
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        private async void OnSendOrdersClicked(object sender, EventArgs e)
+        {
+            var selectedOrders = OrdersCollectionView.SelectedItems.Cast<Order>().ToList();
+
+            if (!selectedOrders.Any())
+            {
+                await DisplayAlert("Ошибка", "Выберите заказы для отправки.", "OK");
+                return;
+            }
+
+            var current = Connectivity.Current;
+            if (current.NetworkAccess != NetworkAccess.Internet)
+            {
+                await DisplayAlert("Ошибка", "Нет подключения к интернету. Заказы не могут быть отправлены.", "OK");
+                return;
+            }
+
+            try
+            {
+                SendOrdersByEmail(selectedOrders);
+                foreach (var order in selectedOrders)
+                {
+                    _orders.Remove(order);
+                }
+
+                OrdersCollectionView.SelectedItems.Clear();
+
+                await DisplayAlert("Успех", "Заказы успешно отправлены на почту.", "OK");
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Ошибка", $"Не удалось отправить заказы: {ex.Message}", "OK");
+            }
+        }
+
+        private void SendOrdersByEmail(List<Order> selectedOrders)
+        {
+            var groupOrder = ProductCache.CachedProducts.Keys.ToList();
+            var ordersByDate = selectedOrders.GroupBy(o => o.OrderDate).ToList();
+
+            foreach (var orderGroup in ordersByDate)
+            {
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress("Aquatir", "rep.1958@mail.ru"));
+                message.To.Add(new MailboxAddress("Получатель", "fen559256@gmail.com"));
+
+                var customerNames = orderGroup.Select(o => o.CustomerName).Distinct();
+                string orderDateText = orderGroup.Key.ToString("dd.MM.yyyy");
+
+                message.Subject = $"Заявка от {string.Join(", ", customerNames)} на {orderDateText}";
+
+                var bodyBuilder = new BodyBuilder();
+
+                foreach (var order in orderGroup)
+                {
+                    var directionText = !string.IsNullOrWhiteSpace(order.Direction) ? order.Direction : "Не указано";
+                    var bodyText = $"<div><b><u><font size='5'>{order.CustomerName} ({directionText}).</font><font size='3'> Заявка на {orderDateText}</font></u></b></div>";
+
+                    var sortedProducts = order.Products
+                        .OrderBy(product => GetProductGroupIndex(RemoveColorTags(product.Name), groupOrder))
+                        .ThenBy(product => RemoveColorTags(product.Name), StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(product => product.Name, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    // Разделение на основной список и горячее копчение
+                    var hotSmokingProducts = sortedProducts
+                        .Where(p => p.Name.Contains("г/к", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    var regularProducts = sortedProducts.Except(hotSmokingProducts).ToList();
+
+                    // Формируем основной список продуктов
+                    foreach (var product in regularProducts)
+                    {
+                        bodyText += $"<div> <font size='3'>{product.DisplayName} - {product.DisplayQuantity}</font></div>";
+                    }
+
+                    // Добавляем горячее копчение отдельным блоком
+                    if (hotSmokingProducts.Any())
+                    {
+                        bodyText += "<div><br/><b> <font size='3'>Горячее копчение:</font></b></div>";
+                        foreach (var product in hotSmokingProducts)
+                        {
+                            bodyText += $"<div> <font size='3'>{product.DisplayName} - {product.DisplayQuantity}</font></div>";
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(order.Comment))
+                    {
+                        bodyText += $"<div><br/><font size='3'>Комментарий к заказу: <i>{order.Comment}</i></font></div>";
+                    }
+                    bodyText += "<div><br/></div>";
+
+                    bodyBuilder.HtmlBody += bodyText;
+                }
+
+                message.Body = bodyBuilder.ToMessageBody();
+
+                using (var client = new SmtpClient())
+                {
+                    client.ServerCertificateValidationCallback = (s, c, h, e) => true;
+
+                    try
+                    {
+                        client.Connect("smtp.mail.ru", 465, true);
+                        client.Authenticate("rep.1958@mail.ru", "zyxrhkQb4KwE0Udwz2cx");
+
+                        client.Send(message);
+                        client.Disconnect(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        DisplayAlert("Ошибка", $"Не удалось отправить заказы: {ex.Message}", "OK");
+                    }
+                }
+            }
+        }
+
+        private int GetProductGroupIndex(string productName, List<string> groupOrder)
+        {
+            foreach (var group in groupOrder)
+            {
+                if (ProductCache.CachedProducts[group]
+                    .Any(product => RemoveColorTags(product.Name) == productName))
+                {
+                    return groupOrder.IndexOf(group);
+                }
+            }
+            return int.MaxValue;
+        }
+
+        private HashSet<string> _seenProducts;
+
+        private void LoadSeenProducts()
+        {
+            var allKeys = PreferenceHelper.GetAllKeys();
+            _seenProducts = new HashSet<string>(
+                allKeys
+                    .Where(key => key.StartsWith("ProductSeen_"))
+                    .Select(key => key.Substring("ProductSeen_".Length))
+            );
+        }
+        private void ResetGroupVisitedStatus(string groupName)
+        {
+            Preferences.Remove($"GroupVisited_{groupName}");
+        }
+        private void UpdateGroupButtons()
+        {
+            foreach (var button in GroupButtonsStackLayout.Children.OfType<Button>())
+            {
+                UpdateGroupBorderColor(button, button.Text);
+            }
+        }
+        public void ReloadProductCache()
+        {
+            // Загружаем данные из JSON-файла
+            var jsonFilePath = Path.Combine(FileSystem.AppDataDirectory, "products.json");
+            if (File.Exists(jsonFilePath))
+            {
+                var json = File.ReadAllText(jsonFilePath);
+                ProductCache.CachedProducts = JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(json);
+            }
+
+            // Сбрасываем состояние "посещённости" для всех групп
+            foreach (var group in ProductCache.CachedProducts.Keys)
+            {
+                ResetGroupVisitedStatus(group);
+            }
+
+            UpdateGroupButtons();
+        }
+
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
+            LoadSeenProducts();
+            ReloadProductCache();
+            _ = CheckForNewProductsAsync();
+            UpdateGroupButtons();
 
-            Console.WriteLine("OnAppearing called");
+            // Загрузка всех продуктов в фоновом режиме
+            await LoadAllProductsAsync();
 
-            // Восстановление сохранённой даты заказа
             if (Preferences.ContainsKey("SelectedOrderDate"))
             {
                 string savedDate = Preferences.Get("SelectedOrderDate", DateTime.Now.ToString("o"));
@@ -257,7 +461,6 @@ namespace Aquatir
                 }
             }
 
-            // Восстановление текущего заказа
             if (Preferences.ContainsKey("CurrentOrder"))
             {
                 string currentOrderJson = Preferences.Get("CurrentOrder", string.Empty);
@@ -267,7 +470,6 @@ namespace Aquatir
                     {
                         var restoredOrder = JsonConvert.DeserializeObject<Order>(currentOrderJson);
                         _currentOrder = restoredOrder;
-
                         Console.WriteLine($"Current order restored: {restoredOrder.OrderID}");
                     }
                     catch (Exception ex)
@@ -278,7 +480,6 @@ namespace Aquatir
                 }
             }
 
-            // Использование загруженных данных о продукции
             if (ProductCache.CachedProducts != null && ProductCache.CachedProducts.Count > 0)
             {
                 Console.WriteLine("Продукция уже загружена, можно использовать данные.");
@@ -302,7 +503,7 @@ namespace Aquatir
                 Console.WriteLine($"Ошибка при сохранении текущего заказа: {ex.Message}");
             }
         }
-        
+
         private void OnCustomerSelected(object sender, EventArgs e)
         {
             if (CustomerPicker.SelectedIndex != -1)
@@ -417,42 +618,44 @@ namespace Aquatir
             }
             return 0;
         }
-        private async void OnGroupButtonClicked(object sender, EventArgs e)
+
+        private void OnGroupButtonClicked(object sender, EventArgs e)
         {
-            Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
             var button = sender as Button;
             string groupName = button.Text;
 
-            await Navigation.PushAsync(new ProductSelectionPage(groupName, this));
+            MarkAllProductsInGroupAsSeen(groupName);
+            UpdateGroupBorderColor(button, groupName);
+
+            Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
+            Navigation.PushAsync(new ProductSelectionPage(groupName, this));
         }
 
         private string NormalizeCustomerName(string inputName)
         {
             var customerNameMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-    {
-        { "Акватир Григориополь", "И/П Дарануца" },
-        { "Акватории Григориополь", "И/П Дарануца" },
-        { "Гончаренко", "И/П Гончаренко" },
-        { "ИП - Романова", "И/П Романова" },
-        { "Галион", "Галион" }
-    };
+            {
+                { "Акватир Григориополь", "И/П Дарануца" },
+                { "Акватории Григориополь", "И/П Дарануца" },
+                { "Гончаренко", "И/П Гончаренко" },
+                { "ИП - Романова", "И/П Романова" },
+                { "Галион", "Галион" }
+            };
 
-            // Возвращаем стандартизированное имя или исходное, если нет в словаре
             string trimmedName = inputName.Trim();
             return customerNameMap.TryGetValue(trimmedName, out string normalizedName)
                 ? normalizedName
                 : trimmedName;
         }
+
         private async void OnFinishOrderClicked(object sender, EventArgs e)
         {
-            // Проверка, что дата заказа не в прошлом
             if (OrderDatePicker.Date < DateTime.Today)
             {
                 await DisplayAlert("Ошибка", "Дата заказа не может быть в прошлом. Пожалуйста, выберите корректную дату.", "OK");
                 return;
             }
 
-            // Остальная логика метода
             if (string.IsNullOrWhiteSpace(CustomerNameEntry.Text) || !_currentOrder.Products.Any())
             {
                 await DisplayAlert("Ошибка", "Пожалуйста, заполните все поля.", "OK");
@@ -490,6 +693,7 @@ namespace Aquatir
             PreviewCollectionView.ItemsSource = null;
             CustomerPicker.SelectedIndex = -1;
             IsPrivatePersonCheckBox.IsChecked = false;
+
             if (CustomerNameEntry.Text.Contains(" на частное лицо"))
             {
                 CustomerNameEntry.Text = CustomerNameEntry.Text.Replace(" на частное лицо", string.Empty);
@@ -521,6 +725,7 @@ namespace Aquatir
                 "*** Заказ/ы можно удалить, нажав по нему, затем по кнопке 'Удалить выбранные заказы'",
                 "OK");
         }
+
         private void OnRemoveProductClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
@@ -536,137 +741,66 @@ namespace Aquatir
                 }
             }
         }
+
         private async void OnSettingsClicked(object sender, EventArgs e)
         {
             await Navigation.PushAsync(new SettingsPage());
         }
 
-        private async void OnSendOrdersClicked(object sender, EventArgs e)
+        private async void OnOrderHistoryClicked(object sender, EventArgs e)
         {
-            var selectedOrders = OrdersCollectionView.SelectedItems.Cast<Order>().ToList();
-
-            if (!selectedOrders.Any())
-            {
-                await DisplayAlert("Ошибка", "Выберите заказы для отправки.", "OK");
-                return;
-            }
-
-            var current = Connectivity.Current;
-            if (current.NetworkAccess != NetworkAccess.Internet)
-            {
-                await DisplayAlert("Ошибка", "Нет подключения к интернету. Заказы не могут быть отправлены.", "OK");
-                return;
-            }
-
-            try
-            {
-                SendOrdersByEmail(selectedOrders);
-                foreach (var order in selectedOrders)
-                {
-                    _orders.Remove(order);
-                }
-
-                OrdersCollectionView.SelectedItems.Clear();
-
-                await DisplayAlert("Успех", "Заказы успешно отправлены на почту.", "OK");
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Ошибка", $"Не удалось отправить заказы: {ex.Message}", "OK");
-            }
+            await Navigation.PushAsync(new OrderHistoryPage());
         }
 
-        private void SendOrdersByEmail(List<Order> selectedOrders)
+        private void UpdatePreview()
         {
-            var groupOrder = ProductCache.CachedProducts.Keys.ToList();
-            var ordersByDate = selectedOrders.GroupBy(o => o.OrderDate).ToList();
+            var productDescriptions = new List<string>();
+            decimal totalAmount = 0;
 
-            foreach (var orderGroup in ordersByDate)
+            foreach (var product in _currentOrder.Products)
             {
-                var message = new MimeMessage();
-                message.From.Add(new MailboxAddress("Aquatir", "rep.1958@mail.ru"));
-                message.To.Add(new MailboxAddress("Получатель", "fen559256@gmail.com"));
+                productDescriptions.Add(FormatProductString(product));
 
-                var customerNames = orderGroup.Select(o => o.CustomerName).Distinct();
-                string orderDateText = orderGroup.Key.ToString("dd.MM.yyyy");
-                Console.WriteLine($"Sending email for date: {orderDateText}");
+                decimal price = 0;
+                if (product.Name.EndsWith("ВЕС.")) price = product.PricePerKg;
+                else if (product.Name.EndsWith("УП.")) price = product.PricePerUnit;
+                else if (product.Name.EndsWith("КОНТ.")) price = product.PricePerCont;
+                else if (product.Name.EndsWith("ШТ.")) price = product.PricePerPiece;
+                else if (product.Name.EndsWith("В.")) price = product.PricePerVedro;
 
-                message.Subject = $"Заявка от {string.Join(", ", customerNames)} на {orderDateText}";
-
-                var bodyBuilder = new BodyBuilder();
-                foreach (var order in orderGroup)
-                {
-                    var directionText = !string.IsNullOrWhiteSpace(order.Direction) ? order.Direction : "Не указано";
-                    var bodyText = $"<div><b><u><font size='5'>{order.CustomerName} ({directionText}).</font><font size='3'> Заявка на {orderDateText}</font></u></b></div>";
-                    var sortedProducts = order.Products
-                        .OrderBy(product => GetProductGroupIndex(RemoveColorTags(product.Name), groupOrder))
-                        .ThenBy(product => RemoveColorTags(product.Name), StringComparer.OrdinalIgnoreCase)
-                        .ThenBy(product => product.Name, StringComparer.OrdinalIgnoreCase);
-
-                    foreach (var product in sortedProducts)
-                    {
-                        bodyText += $"<div> <font size='3'>{product.DisplayName} - {product.DisplayQuantity}</font></div>";
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(order.Comment))
-                    {
-                        bodyText += $"<div><br/><font size='3'>Комментарий к заказу: <i>{order.Comment}</i></font></div>";
-                    }
-                    bodyText += "<div><br/></div>";
-
-                    bodyBuilder.HtmlBody += bodyText;
-                }
-
-                message.Body = bodyBuilder.ToMessageBody();
-
-                using (var client = new SmtpClient())
-                {
-                    client.ServerCertificateValidationCallback = (s, c, h, e) => true;
-
-                    try
-                    {
-                        client.Connect("smtp.mail.ru", 465, true);
-                        client.Authenticate("rep.1958@mail.ru", "zyxrhkQb4KwE0Udwz2cx");
-
-                        client.Send(message);
-                        client.Disconnect(true);
-                    }
-                    catch (Exception ex)
-                    {
-                        DisplayAlert("Ошибка", $"Не удалось отправить заказы: {ex.Message}", "OK");
-                    }
-                }
+                totalAmount += product.Quantity * price;
             }
+
+            if (Preferences.Get("ShowPriceEnabled", false))
+            {
+                productDescriptions.Add($"Сумма заказа: {totalAmount:N2} руб.");
+            }
+
+            PreviewCollectionView.ItemsSource = productDescriptions;
         }
 
-
-        private int GetProductGroupIndex(string productName, List<string> groupOrder)
+        public void RestoreOrderForEditing(Order order)
         {
-            foreach (var group in groupOrder)
-            {
-                if (ProductCache.CachedProducts[group]
-                    .Any(product => RemoveColorTags(product.Name) == productName))
-                {
-                    return groupOrder.IndexOf(group);
-                }
-            }
-            return int.MaxValue;
+            CustomerNameEntry.Text = order.CustomerName;
+            DirectionPicker.SelectedItem = order.Direction;
+            OrderDatePicker.Date = order.OrderDate;
+            CommentEntry.Text = order.Comment;
+            _currentOrder = order;
+            UpdatePreview();
         }
 
         private string FormatProductString(ProductItem product)
         {
-            // Удаляем теги <color> из названия продукта
             string productName = RemoveColorTags(product.Name);
 
-            // Определяем единицу измерения и удаляем её из названия
             var unitMapping = new Dictionary<string, string>
-    {
-        { "ВЕС.", "кг." },
-        { "УП.", "уп." },
-        { "ШТ.", "шт." },
-        { "В.", "в." },
-        { "КОНТ.", "конт." }
-    };
+            {
+                { "ВЕС.", "кг." },
+                { "УП.", "уп." },
+                { "ШТ.", "шт." },
+                { "В.", "в." },
+                { "КОНТ.", "конт." }
+            };
 
             string unit = "";
             foreach (var suffix in unitMapping.Keys)
@@ -679,25 +813,23 @@ namespace Aquatir
                 }
             }
 
-            // Форматируем количество
             string formattedQuantity = product.Quantity % 1 == 0
                 ? product.Quantity.ToString("0")
                 : product.Quantity.ToString("0.0#");
 
-            // Формируем информацию о цене
             string priceInfo = "";
             bool showPrice = Preferences.Get("ShowPriceEnabled", false);
 
             if (showPrice)
             {
                 var priceMapping = new Dictionary<string, decimal>
-        {
-            { "уп.", product.PricePerUnit },
-            { "кг.", product.PricePerKg },
-            { "конт.", product.PricePerCont },
-            { "шт.", product.PricePerPiece },
-            { "в.", product.PricePerVedro }
-        };
+                {
+                    { "уп.", product.PricePerUnit },
+                    { "кг.", product.PricePerKg },
+                    { "конт.", product.PricePerCont },
+                    { "шт.", product.PricePerPiece },
+                    { "в.", product.PricePerVedro }
+                };
 
                 if (priceMapping.TryGetValue(unit, out decimal price) && price > 0)
                 {
@@ -772,7 +904,30 @@ namespace Aquatir
                 DisplayAlert("Ошибка", "Не удалось найти заказ для обновления.", "OK");
             }
         }
+        private async Task LoadAllProductsAsync()
+        {
+            await Task.Run(() =>
+            {
+                bool showPackagedProducts = Preferences.Get("ShowPackagedProducts", true);
 
+                List<ProductItem> allProducts = ProductCache.CachedProducts.Values
+                    .SelectMany(products => products)
+                    .Where(product =>
+                    {
+                        if (!showPackagedProducts)
+                        {
+                            return !product.Name.EndsWith("УП.", StringComparison.OrdinalIgnoreCase);
+                        }
+                        return true;
+                    }).ToList();
+
+                Device.BeginInvokeOnMainThread(() =>
+                {
+                    // Здесь можно обновить UI, если это необходимо
+                    Console.WriteLine("Все продукты загружены в фоновом режиме.");
+                });
+            });
+        }
         private async void OnDeleteOrdersClicked(object sender, EventArgs e)
         {
             var selectedOrders = OrdersCollectionView.SelectedItems.Cast<Order>().ToList();
@@ -793,49 +948,6 @@ namespace Aquatir
 
                 OrdersCollectionView.SelectedItems.Clear();
             }
-        }
-        private async void OnOrderHistoryClicked(object sender, EventArgs e)
-        {
-            await Navigation.PushAsync(new OrderHistoryPage());
-        }
-        private void UpdatePreview()
-        {
-            // Оптимизация: получаем и форматируем продукты за один проход, и считаем сумму
-            var productDescriptions = new List<string>();
-            decimal totalAmount = 0;
-
-            foreach (var product in _currentOrder.Products)
-            {
-                // Добавляем отформатированное описание продукта
-                productDescriptions.Add(FormatProductString(product));
-
-                // Подсчитываем общую сумму заказа
-                decimal price = 0;
-                if (product.Name.EndsWith("ВЕС.")) price = product.PricePerKg;
-                else if (product.Name.EndsWith("УП.")) price = product.PricePerUnit;
-                else if (product.Name.EndsWith("КОНТ.")) price = product.PricePerCont;
-                else if (product.Name.EndsWith("ШТ.")) price = product.PricePerPiece;
-                else if (product.Name.EndsWith("В.")) price = product.PricePerVedro;
-
-                totalAmount += product.Quantity * price;
-            }
-
-            // Добавляем общую сумму, если включено отображение цен
-            if (Preferences.Get("ShowPriceEnabled", false))
-            {
-                productDescriptions.Add($"Сумма заказа: {totalAmount:N2} руб.");
-            }
-
-            PreviewCollectionView.ItemsSource = productDescriptions;
-        }
-        public void RestoreOrderForEditing(Order order)
-        {
-            CustomerNameEntry.Text = order.CustomerName;
-            DirectionPicker.SelectedItem = order.Direction;
-            OrderDatePicker.Date = order.OrderDate;
-            CommentEntry.Text = order.Comment;
-            _currentOrder = order;
-            UpdatePreview();
         }
     }
 }
