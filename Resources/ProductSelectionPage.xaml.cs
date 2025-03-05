@@ -27,10 +27,10 @@ namespace Aquatir
             bool showPackagedProducts = Preferences.Get("ShowPackagedProducts", true);
 
             List<ProductItem> filteredProducts;
-            ShowLoadingIndicator();
+
             if (_groupName == "Вся продукция")
             {
-                // Используем уже загруженные продукты
+                // Собираем все продукты из всех групп
                 filteredProducts = ProductCache.CachedProducts.Values
                     .SelectMany(products => products)
                     .Where(product =>

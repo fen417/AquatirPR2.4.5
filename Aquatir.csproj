@@ -154,6 +154,7 @@
     <PackageReference Include="MailKit" Version="4.10.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Plugin.LocalNotification" Version="11.1.4" />
+    <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Resources\Assets\sc250ke.png">

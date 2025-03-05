@@ -11,6 +11,7 @@ namespace Aquatir
         private DateTime _orderDate = DateTime.Now;
         private string _comment = string.Empty;
         private List<ProductItem> _products = new List<ProductItem>();
+
         public decimal TotalAmount
         {
             get
@@ -18,10 +19,7 @@ namespace Aquatir
                 decimal total = 0;
                 foreach (var product in Products)
                 {
-                    // Получаем единицу измерения продукта
                     string unit = GetUnitFromName(product.Name).ToLower();
-
-                    // Определяем цену в зависимости от единицы измерения
                     decimal price = unit switch
                     {
                         "кг" => product.PricePerKg,
@@ -32,23 +30,11 @@ namespace Aquatir
                         _ => 0
                     };
 
-                    // Проверяем корректность данных
                     if (price > 0 && product.Quantity > 0)
                     {
                         decimal productTotal = product.Quantity * price;
-                        Console.WriteLine($"Продукт: {product.Name}, Единица измерения: {unit}, Цена: {price}, Итого за продукт: {productTotal}");
                         total += productTotal;
                     }
-                    else
-                    {
-                        Console.WriteLine($"Ошибка: Цена или количество для продукта {product.Name} некорректно");
-                    }
-                }
-
-                // Проверка на случай, если итоговая сумма равна нулю
-                if (total == 0)
-                {
-                    Console.WriteLine("Внимание: Итоговая сумма равна нулю. Проверьте данные продуктов.");
                 }
 
                 return total;
@@ -63,13 +49,8 @@ namespace Aquatir
                 return showPrice ? $"Сумма заказа: {TotalAmount} руб." : string.Empty;
             }
         }
-        public string FormattedOrderDetails
-        {
-            get
-            {
-                return $"{FormattedCompletionDate}\n{FormattedTotalAmount}";
-            }
-        }
+
+        public string FormattedOrderDetails => $"{FormattedCompletionDate}\n{FormattedTotalAmount}";
 
         public string GetFormattedOrderSummary()
         {
@@ -129,35 +110,25 @@ namespace Aquatir
             {
                 return "конт.";
             }
-            return string.Empty; // Или можно вернуть "ед." для незнакомых наименований
+            return string.Empty;
         }
+
         public string GetFormattedOrderSummaryForEmail()
         {
             var orderSummary = new List<string>();
 
-            // Добавляем информацию о каждом продукте
             foreach (var product in Products)
             {
-                // Убираем суффиксы и получаем чистое название продукта
-                string productName = RemoveUnitFromName(product.Name).Replace("*", ""); ;
-
-                // Получаем количество и форматируем его
+                string productName = RemoveUnitFromName(product.Name).Replace("*", "");
                 string formattedQuantity = product.Quantity % 1 == 0 ? product.Quantity.ToString("0") : product.Quantity.ToString("0.#");
-
-                // Получаем единицу измерения
                 string unit = GetUnitFromName(product.Name);
-
-                // Формируем строку для отображения без стоимости
                 string productInfo = $"{productName} - {formattedQuantity} {unit}";
-
                 orderSummary.Add(productInfo);
             }
 
-            // Возвращаем объединенные строки с тегами <br> для переноса
             return string.Join("<br>", orderSummary);
         }
 
-        // Метод для удаления суффиксов из названия продукта
         private string RemoveUnitFromName(string productName)
         {
             if (string.IsNullOrEmpty(productName)) return productName;
@@ -170,10 +141,9 @@ namespace Aquatir
                     return productName.Substring(0, productName.Length - unit.Length).Trim();
                 }
             }
-            return productName; // Если ни одно из условий не выполняется
+            return productName;
         }
 
-        // Команда для кнопки "Назад"
         public ICommand GoBackCommand { get; }
 
         public Order()
@@ -181,25 +151,18 @@ namespace Aquatir
             GoBackCommand = new Command(ExecuteGoBack);
         }
 
-        // Метод для команды GoBackCommand
         private void ExecuteGoBack()
         {
-            // Логика для возврата на предыдущую страницу
             Application.Current.MainPage.Navigation.PopAsync();
         }
-        public string OrderID { get; set; } = Guid.NewGuid().ToString(); // Уникальный идентификатор
 
+        public string OrderID { get; set; } = Guid.NewGuid().ToString();
 
-        public string DisplayOrderDate
-        {
-            get => OrderDate.ToString("dd.MM.yyyy"); // Форматирование даты
-        }
+        public string DisplayOrderDate => OrderDate.ToString("dd.MM.yyyy");
 
         public DateTime CompletionDate { get; set; }
-        public string FormattedCompletionDate
-        {
-            get => $"Дата отправки заявки: {CompletionDate.ToString("dd.MM.yyyy HH:mm")}";
-        }
+        public string FormattedCompletionDate => $"Дата отправки заявки: {CompletionDate.ToString("dd.MM.yyyy HH:mm")}";
+
         public string CustomerName
         {
             get => _customerName;
@@ -271,135 +234,5 @@ namespace Aquatir
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-    }
-
-    public class ProductItem
-    {
-        public string Name { get; set; }
-        public decimal Quantity { get; set; }
-        public bool IsNew { get; set; }
-        public bool IsRes { get; set; }
-        public bool IsEnd { get; set; }
-        public decimal PricePerKg { get; set; }  // Цена за кг
-        public decimal PricePerUnit { get; set; } // Цена за упаковку
-        public decimal PricePerVedro { get; set; } // Цена за упаковку
-        public decimal PricePerPiece { get; set; } // Цена за упаковку
-        public string FormattedName
-        {
-            get
-            {
-                if (Preferences.Get("IgnoreColors", false)) // Проверка настройки
-                {
-                    return System.Text.RegularExpressions.Regex.Replace(Name, @"<color=#(?:[A-Fa-f0-9]{6})>(.*?)<\/color>", "$1");
-                }
-                return Name;
-            }
-        }
-
-
-        public decimal PricePerCont { get; set; } // Цена за упаковку
-
-        public string DisplayPrice
-        {
-            get
-            {
-                bool showPrice = Preferences.Get("ShowPriceEnabled", false);
-
-                // Строка для хранения результата
-                string priceString = "";
-
-                // Проверяем и добавляем цену за килограмм, если она есть
-                if (showPrice && PricePerKg > 0)
-                {
-                    priceString += $"{PricePerKg} руб./кг";
-                }
-
-                // Проверяем и добавляем цену за упаковку, если она есть
-                if (showPrice && PricePerUnit > 0)
-                {
-                    if (!string.IsNullOrEmpty(priceString))
-                    {
-                        priceString += "; ";
-                    }
-                    priceString += $"{PricePerUnit} руб./уп.";
-                }
-                if (showPrice && PricePerVedro > 0)
-                {
-                    if (!string.IsNullOrEmpty(priceString))
-                    {
-                        priceString += "; ";
-                    }
-                    priceString += $"{PricePerVedro} руб./ведро";
-                }
-                if (showPrice && PricePerPiece > 0)
-                {
-                    if (!string.IsNullOrEmpty(priceString))
-                    {
-                        priceString += "; ";
-                    }
-                    priceString += $"{PricePerPiece} руб./шт.";
-                }
-                if (showPrice && PricePerCont > 0)
-                {
-                    if (!string.IsNullOrEmpty(priceString))
-                    {
-                        priceString += "; ";
-                    }
-                    priceString += $"{PricePerCont} руб./контейнер";
-                }
-                return priceString;
-            }
-        }
-        public string DisplayQuantity
-        {
-            get
-            {
-                string unit = GetUnitFromName(Name);
-                return Quantity % 1 == 0 ? $"{Quantity:0} {unit}" : $"{Quantity:0.##} {unit}";
-            }
-        }
-
-        public string DisplayName => RemoveUnitFromName(Name);
-
-
-        private string GetUnitFromName(string productName)
-        {
-            if (productName.EndsWith("УП.", StringComparison.OrdinalIgnoreCase))
-            {
-                return "уп.";
-            }
-            else if (productName.EndsWith("ШТ.", StringComparison.OrdinalIgnoreCase))
-            {
-                return "шт.";
-            }
-            else if (productName.EndsWith("ВЕС.", StringComparison.OrdinalIgnoreCase))
-            {
-                return "кг";
-            }
-            else if (productName.EndsWith("В.", StringComparison.OrdinalIgnoreCase))
-            {
-                return "в.";
-            }
-            else if (productName.EndsWith("КОНТ.", StringComparison.OrdinalIgnoreCase))
-            {
-                return "конт.";
-            }
-            return string.Empty; // Или можно вернуть "ед." для незнакомых наименований
-        }
-        private string RemoveUnitFromName(string productName)
-        {
-            if (string.IsNullOrEmpty(productName)) return productName;
-
-            string[] units = { "УП.", "ШТ.", "ВЕС.", "В.", "КОНТ." };
-            foreach (var unit in units)
-            {
-                if (productName.EndsWith(unit, StringComparison.OrdinalIgnoreCase))
-                {
-                    return productName.Substring(0, productName.Length - unit.Length).Trim();
-                }
-            }
-            return productName; // Если ни одно из условий не выполняется
-        }
-
     }
 }

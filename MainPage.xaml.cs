@@ -17,12 +17,18 @@ namespace Aquatir
         private ObservableCollection<Order> _orders = new ObservableCollection<Order>();
         private Order _currentOrder = new Order();
         private Dictionary<string, List<string>> _customersByDirection;
+        public bool IsDataLoaded { get; private set; } = false;
         public bool ShowCityPicker { get; set; }
         public bool IsManager { get; set; }
 
         public MainPage()
         {
+            Console.WriteLine("[MainPage] Конструктор вызван.");
             InitializeComponent();
+            Console.WriteLine("[MainPage] Инициализация компонентов завершена.");
+
+            // Логирование инициализации данных
+            Console.WriteLine("[MainPage] Инициализация данных...");
             ScheduleWeeklyNotification();
             CheckMissedNotification();
             bool isAuthorizationDisabled = Preferences.Get("AuthorizationDisabled", false);
@@ -48,10 +54,10 @@ namespace Aquatir
                     CustomerNameEntry.Text = userShopName;
 
                 var validShops = new List<string>
-                {
-                    "ип - романова", "акватории григориополь", "акватир григориополь",
-                    "галион", "акватир бендеры"
-                };
+        {
+            "ип - романова", "акватории григориополь", "акватир григориополь",
+            "галион", "акватир бендеры"
+        };
 
                 OrderDatePicker.Date = validShops.Contains(userShopName.ToLower()) ? DateTime.Now.AddDays(1) : DateTime.Now;
             }
@@ -59,25 +65,26 @@ namespace Aquatir
             BindingContext = this;
 
             _customersByDirection = new Dictionary<string, List<string>>
-            {
-                { "Тирасполь", new List<string> {
-                    "Агора Бородино", "Агора Зелинского", "Агора Краснодонская", "Агора Юности", "Агора Чкалова",
-                    "БМК - 2", "БМК - 31", "Динисалл Каховская", "Динисалл Краснодонская", "Динисалл Палома",
-                    "Динисалл Фортуна", "И/П Насиковский", "И/П Сырбул", "И/П Хаджи", "И/П Кобзарь",
-                    "ООО Наполи (р-н Джорджия)", "Сигл Комета", "Сигл Ларионова", "У Семёныча", "Фагот",
-                    "Эверест", "Эндис"
-                }},
-                { "Бендеры", new List<string> {
-                    "Агора Гиска", "БМК - 4", "БМК - 9", "БМК - 24", "БМК - 29", "БМК - 30",
-                    "Динисалл Победы", "Динисалл Салют", "Динисалл Социальный", "И/П Балан", "И/П Белая",
-                    "И/П Березина", "И/П Грек", "И/П Новойдарская", "И/П Новойдарский", "И/П Эдигер",
-                    "Ильина", "Шишкин", "ЮГ 1", "ЮГ 2", "ЮГ 3", "ЮГ 4", "ЮГ 5", "ЮГ 7", "ЮГ 8"
-                }},
-                { "Григориополь", new List<string> { "Дарануца" } },
-                { "Самовывоз", new List<string> { "" } }
-            };
+    {
+        { "Тирасполь", new List<string> {
+            "Агора Бородино", "Агора Зелинского", "Агора Краснодонская", "Агора Юности", "Агора Чкалова",
+            "БМК - 2", "БМК - 31", "Динисалл Каховская", "Динисалл Краснодонская", "Динисалл Палома",
+            "Динисалл Фортуна", "И/П Насиковский", "И/П Сырбул", "И/П Хаджи", "И/П Кобзарь",
+            "ООО Наполи (р-н Джорджия)", "Сигл Комета", "Сигл Ларионова", "У Семёныча", "Фагот",
+            "Эверест", "Эндис"
+        }},
+        { "Бендеры", new List<string> {
+            "Агора Гиска", "БМК - 4", "БМК - 9", "БМК - 24", "БМК - 29", "БМК - 30",
+            "Динисалл Победы", "Динисалл Салют", "Динисалл Социальный", "И/П Балан", "И/П Белая",
+            "И/П Березина", "И/П Грек", "И/П Новойдарская", "И/П Новойдарский", "И/П Эдигер",
+            "Ильина", "Шишкин", "ЮГ 1", "ЮГ 2", "ЮГ 3", "ЮГ 4", "ЮГ 5", "ЮГ 7", "ЮГ 8"
+        }},
+        { "Григориополь", new List<string> { "Дарануца" } },
+        { "Самовывоз", new List<string> { "" } }
+    };
 
             OrdersCollectionView.ItemsSource = _orders;
+            Console.WriteLine("[MainPage] Инициализация данных завершена.");
         }
 
         private void ScheduleWeeklyNotification()
@@ -135,11 +142,6 @@ namespace Aquatir
         private bool HasGroupBeenVisited(string groupName)
         {
             return Preferences.Get($"GroupVisited_{groupName}", false);
-        }
-
-        private void MarkGroupAsVisited(string groupName)
-        {
-            Preferences.Set($"GroupVisited_{groupName}", true);
         }
 
         private void UpdateGroupBorderColor(Button button, string groupName)
@@ -312,7 +314,7 @@ namespace Aquatir
             {
                 var message = new MimeMessage();
                 message.From.Add(new MailboxAddress("Aquatir", "rep.1958@mail.ru"));
-                message.To.Add(new MailboxAddress("Получатель", "fen559256@gmail.com"));
+                message.To.Add(new MailboxAddress("Получатель", "andreypir16@gmail.com"));
 
                 var customerNames = orderGroup.Select(o => o.CustomerName).Distinct();
                 string orderDateText = orderGroup.Key.ToString("dd.MM.yyyy");
@@ -410,57 +412,89 @@ namespace Aquatir
                     .Select(key => key.Substring("ProductSeen_".Length))
             );
         }
-        private void ResetGroupVisitedStatus(string groupName)
+       
+        private async Task ReloadProductCacheAsync()
         {
-            Preferences.Remove($"GroupVisited_{groupName}");
-        }
-        private void UpdateGroupButtons()
-        {
-            foreach (var button in GroupButtonsStackLayout.Children.OfType<Button>())
+            Console.WriteLine("[MainPage] Перезагрузка кэша продукции...");
+            try
             {
-                UpdateGroupBorderColor(button, button.Text);
-            }
-        }
-        public void ReloadProductCache()
-        {
-            // Загружаем данные из JSON-файла
-            var jsonFilePath = Path.Combine(FileSystem.AppDataDirectory, "products.json");
-            if (File.Exists(jsonFilePath))
-            {
-                var json = File.ReadAllText(jsonFilePath);
-                ProductCache.CachedProducts = JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(json);
-            }
+                var databaseService = new DatabaseService();
+                var productGroups = await databaseService.LoadProductGroupsAsync();
 
-            // Сбрасываем состояние "посещённости" для всех групп
-            foreach (var group in ProductCache.CachedProducts.Keys)
-            {
-                ResetGroupVisitedStatus(group);
-            }
+                if (productGroups == null || productGroups.Count == 0)
+                {
+                    // Логирование без блокировки UI
+                    Device.BeginInvokeOnMainThread(() =>
+                        Console.WriteLine("[MainPage] CRITICAL: Продукты не загружены!")
+                    );
+                    return;
+                }
 
-            UpdateGroupButtons();
+                ProductCache.CachedProducts = productGroups;
+            }
+            catch (Exception ex)
+            {
+                Device.BeginInvokeOnMainThread(() => {
+                    Console.WriteLine($"[MainPage] Ошибка при перезагрузке кэша продукции: {ex.Message}");
+                    DisplayAlert("Ошибка", "Не удалось загрузить продукты.", "OK");
+                });
+            }
         }
 
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            LoadSeenProducts();
-            ReloadProductCache();
-            _ = CheckForNewProductsAsync();
-            UpdateGroupButtons();
+            Console.WriteLine("[MainPage] Страница отображается.");
 
-            // Загрузка всех продуктов в фоновом режиме
-            await LoadAllProductsAsync();
+            // Блокируем кнопки групп
+            IsDataLoaded = false;
+            UpdateGroupButtonsState();
 
+            try
+            {
+                await Task.WhenAll(
+                    LoadDataAsync(),
+                    Task.Run(LoadSeenProducts),
+                    ReloadProductCacheAsync(),
+                    CheckForNewProductsAsync()
+                );
+
+                RestoreSelectedDate();
+                RestoreCurrentOrder();
+                await ValidateProductCache();
+
+                // Разблокируем кнопки групп после загрузки данных
+                IsDataLoaded = true;
+                UpdateGroupButtonsState();
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Ошибка", "Не удалось загрузить данные. Перезапустите приложение.", "OK");
+            }
+        }
+        private void UpdateGroupButtonsState()
+        {
+            foreach (var button in GroupButtonsStackLayout.Children.OfType<Button>())
+            {
+                button.IsEnabled = IsDataLoaded;
+            }
+        }
+
+        private void RestoreSelectedDate()
+        {
             if (Preferences.ContainsKey("SelectedOrderDate"))
             {
                 string savedDate = Preferences.Get("SelectedOrderDate", DateTime.Now.ToString("o"));
                 if (DateTime.TryParse(savedDate, null, DateTimeStyles.RoundtripKind, out DateTime restoredDate))
                 {
                     OrderDatePicker.Date = restoredDate;
-                    Console.WriteLine($"Date restored to: {restoredDate}");
+                    Console.WriteLine($"[MainPage] Дата восстановлена: {restoredDate}");
                 }
             }
+        }
 
+        private void RestoreCurrentOrder()
+        {
             if (Preferences.ContainsKey("CurrentOrder"))
             {
                 string currentOrderJson = Preferences.Get("CurrentOrder", string.Empty);
@@ -470,23 +504,48 @@ namespace Aquatir
                     {
                         var restoredOrder = JsonConvert.DeserializeObject<Order>(currentOrderJson);
                         _currentOrder = restoredOrder;
-                        Console.WriteLine($"Current order restored: {restoredOrder.OrderID}");
+                        Console.WriteLine($"[MainPage] Заказ восстановлен: {restoredOrder.OrderID}");
                     }
                     catch (Exception ex)
                     {
                         _currentOrder = new Order();
-                        Console.WriteLine($"Error restoring order: {ex.Message}");
+                        Console.WriteLine($"[MainPage] Ошибка при восстановлении заказа: {ex.Message}");
                     }
                 }
             }
+        }
 
+        private async Task ValidateProductCache()
+        {
             if (ProductCache.CachedProducts != null && ProductCache.CachedProducts.Count > 0)
             {
-                Console.WriteLine("Продукция уже загружена, можно использовать данные.");
+                Console.WriteLine("[MainPage] Продукция загружена");
             }
             else
             {
-                Console.WriteLine("Продукция не загружена, возможно, произошла ошибка.");
+                Console.WriteLine("[MainPage] CRITICAL: Продукция НЕ загружена!");
+                await DisplayAlert("Ошибка", "Не удалось загрузить продукты. Попробуйте ещё раз.", "OK");
+            }
+        }
+        private async Task LoadDataAsync()
+        {
+            Console.WriteLine("[MainPage] Загрузка данных...");
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)); // Таймаут 10 секунд
+                var databaseService = new DatabaseService();
+                var productGroups = await databaseService.LoadProductGroupsAsync().WaitAsync(cts.Token);
+
+                Console.WriteLine($"[MainPage] Загружено {productGroups.Count} групп продукции.");
+            }
+            catch (OperationCanceledException)
+            {
+                await DisplayAlert("Ошибка", "Время загрузки данных истекло. Проверьте подключение.", "OK");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MainPage] Ошибка при загрузке данных: {ex.Message}");
+                await DisplayAlert("Ошибка", "Не удалось загрузить данные. Перезапустите приложение.", "OK");
             }
         }
 
@@ -619,8 +678,14 @@ namespace Aquatir
             return 0;
         }
 
-        private void OnGroupButtonClicked(object sender, EventArgs e)
+        private async void OnGroupButtonClicked(object sender, EventArgs e)
         {
+            if (!IsDataLoaded)
+            {
+                await DisplayAlert("Ошибка", "Данные ещё не загружены. Пожалуйста, подождите.", "OK");
+                return;
+            }
+
             var button = sender as Button;
             string groupName = button.Text;
 
@@ -628,7 +693,7 @@ namespace Aquatir
             UpdateGroupBorderColor(button, groupName);
 
             Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
-            Navigation.PushAsync(new ProductSelectionPage(groupName, this));
+            await Navigation.PushAsync(new ProductSelectionPage(groupName, this));
         }
 
         private string NormalizeCustomerName(string inputName)
@@ -904,30 +969,7 @@ namespace Aquatir
                 DisplayAlert("Ошибка", "Не удалось найти заказ для обновления.", "OK");
             }
         }
-        private async Task LoadAllProductsAsync()
-        {
-            await Task.Run(() =>
-            {
-                bool showPackagedProducts = Preferences.Get("ShowPackagedProducts", true);
 
-                List<ProductItem> allProducts = ProductCache.CachedProducts.Values
-                    .SelectMany(products => products)
-                    .Where(product =>
-                    {
-                        if (!showPackagedProducts)
-                        {
-                            return !product.Name.EndsWith("УП.", StringComparison.OrdinalIgnoreCase);
-                        }
-                        return true;
-                    }).ToList();
-
-                Device.BeginInvokeOnMainThread(() =>
-                {
-                    // Здесь можно обновить UI, если это необходимо
-                    Console.WriteLine("Все продукты загружены в фоновом режиме.");
-                });
-            });
-        }
         private async void OnDeleteOrdersClicked(object sender, EventArgs e)
         {
             var selectedOrders = OrdersCollectionView.SelectedItems.Cast<Order>().ToList();

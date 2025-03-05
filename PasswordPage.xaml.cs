@@ -69,17 +69,26 @@ namespace Aquatir
 
         private void NavigateToMainPage()
         {
-            if (DeviceInfo.Platform == DevicePlatform.Android)
+            Console.WriteLine("[PasswordPage] Переход на главную страницу...");
+            try
             {
-                Application.Current.MainPage = new AppShell();
+                if (DeviceInfo.Platform == DevicePlatform.Android)
+                {
+                    Application.Current.MainPage = new AppShell();
+                }
+                else if (DeviceInfo.Platform == DevicePlatform.WinUI)
+                {
+                    Application.Current.MainPage = new MainPage();
+                }
+                else
+                {
+                    Application.Current.MainPage = new MainPage();
+                }
+                Console.WriteLine("[PasswordPage] Переход на главную страницу завершен.");
             }
-            else if (DeviceInfo.Platform == DevicePlatform.WinUI)
+            catch (Exception ex)
             {
-                Application.Current.MainPage = new MainPage();
-            }
-            else
-            {
-                Application.Current.MainPage = new MainPage();
+                Console.WriteLine($"[PasswordPage] Ошибка при переходе на главную страницу: {ex.Message}");
             }
         }
 
@@ -125,12 +134,10 @@ namespace Aquatir
                     var productGroups = JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(content);
                     if (productGroups != null)
                     {
-                        foreach (var group in productGroups)
-                        {
-                            ProductCache.CachedProducts[group.Key] = group.Value;
-                        }
-                        ProductCache.SaveCache();
-                        Console.WriteLine("Данные успешно сохранены в кэш.");
+                        var databaseService = new DatabaseService();
+                        await databaseService.SaveProductGroupsAsync(productGroups);
+
+                        Console.WriteLine("Данные успешно сохранены в базу данных.");
                     }
                 }
                 else

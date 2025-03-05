@@ -17,20 +17,37 @@ namespace Aquatir
         public App()
         {
             InitializeComponent();
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+            {
+                Console.WriteLine($"[App] Необработанное исключение: {args.ExceptionObject}");
+            };
             LoadProductsOnStartup();
         }
 
         private async void LoadProductsOnStartup()
         {
-            bool isAuthorized = Preferences.Get("IsAuthorized", false);
-            if (isAuthorized)
+            try
             {
-                await LoadAllProductsFromUrl();
+                bool isAuthorized = Preferences.Get("IsAuthorized", false);
+                if (isAuthorized)
+                {
+                    await LoadAllProductsFromUrl();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[App] Ошибка при загрузке продуктов: {ex.Message}");
             }
         }
 
         private async Task LoadAllProductsFromUrl()
         {
+            if (Connectivity.NetworkAccess != NetworkAccess.Internet)
+            {
+                Console.WriteLine("Нет подключения к интернету.");
+                return;
+            }
+
             string fileUrl = await GetFileDownloadLinkFromYandex();
             if (string.IsNullOrEmpty(fileUrl))
             {
@@ -75,22 +92,30 @@ namespace Aquatir
 
         private async Task<string> GetFileDownloadLinkFromYandex()
         {
-            string yandexFilePath = "/productsCOLOR.json";  // Путь к файлу на Яндекс.Диске
-            string token = "y0_AgAAAAB4zZe6AAzBewAAAAEYCy0wAAABOYgsBbpL6pQDgfd6pphTlGUu3Q";  // OAuth токен
-
-            client.DefaultRequestHeaders.Clear();
-            client.DefaultRequestHeaders.Add("Authorization", $"OAuth {token}");
-
-            var response = await client.GetAsync($"https://cloud-api.yandex.net/v1/disk/resources/download?path={Uri.EscapeDataString(yandexFilePath)}");
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var content = await response.Content.ReadAsStringAsync();
-                var json = JsonConvert.DeserializeObject<dynamic>(content);
-                return json.href;
+                string yandexFilePath = "/productsCOLOR.json";  // Путь к файлу на Яндекс.Диске
+                string token = "y0_AgAAAAB4zZe6AAzBewAAAAEYCy0wAAABOYgsBbpL6pQDgfd6pphTlGUu3Q";  // OAuth токен
+
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Add("Authorization", $"OAuth {token}");
+
+                var response = await client.GetAsync($"https://cloud-api.yandex.net/v1/disk/resources/download?path={Uri.EscapeDataString(yandexFilePath)}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var json = JsonConvert.DeserializeObject<dynamic>(content);
+                    return json.href;
+                }
+                else
+                {
+                    Console.WriteLine("Ошибка получения ссылки для скачивания: " + response.StatusCode);
+                    return null;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Ошибка получения ссылки для скачивания: " + response.StatusCode);
+                Console.WriteLine($"Ошибка при получении ссылки для скачивания: {ex.Message}");
                 return null;
             }
         }
@@ -117,8 +142,15 @@ namespace Aquatir
 
         public static void SaveCache()
         {
-            var json = JsonConvert.SerializeObject(CachedProducts);
-            Preferences.Set(CacheKey, json);
+            try
+            {
+                var json = JsonConvert.SerializeObject(CachedProducts ?? new Dictionary<string, List<ProductItem>>());
+                Preferences.Set(CacheKey, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при сохранении кэша: {ex.Message}");
+            }
         }
 
         public static void SaveLastModified(DateTime lastModified)
@@ -133,7 +165,16 @@ namespace Aquatir
             if (string.IsNullOrEmpty(json))
                 return new Dictionary<string, List<ProductItem>>();
 
-            return JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(json);
+            try
+            {
+                return JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(json)
+                       ?? new Dictionary<string, List<ProductItem>>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при загрузке кэша: {ex.Message}");
+                return new Dictionary<string, List<ProductItem>>();
+            }
         }
 
         private static DateTime LoadLastModified()

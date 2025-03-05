@@ -21,6 +21,10 @@ public class MainActivity : MauiAppCompatActivity
         {
             ActivityCompat.RequestPermissions(this, new string[] { Android.Manifest.Permission.PostNotifications }, 0);
         }
+        if (CheckSelfPermission(Android.Manifest.Permission.WriteExternalStorage) != Permission.Granted)
+        {
+            RequestPermissions(new string[] { Android.Manifest.Permission.WriteExternalStorage }, 1);
+        }
 
         // Создаем список каналов уведомлений
         var channelRequests = new List<NotificationChannelRequest>
