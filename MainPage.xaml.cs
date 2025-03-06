@@ -26,6 +26,7 @@ namespace Aquatir
             Console.WriteLine("[MainPage] Конструктор вызван.");
             InitializeComponent();
             Console.WriteLine("[MainPage] Инициализация компонентов завершена.");
+            Connectivity.Current.ConnectivityChanged += Current_ConnectivityChanged;
 
             // Логирование инициализации данных
             Console.WriteLine("[MainPage] Инициализация данных...");
@@ -159,6 +160,22 @@ namespace Aquatir
                 button.BorderWidth = 0;
             }
         }
+        private void Current_ConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
+{
+    Device.BeginInvokeOnMainThread(async () =>
+    {
+        if (e.NetworkAccess != NetworkAccess.Internet)
+        {
+            Console.WriteLine("[MainPage] Соединение с интернетом потеряно.");
+            await DisplayAlert("Предупреждение", "Интернет-соединение отсутствует. Некоторые функции могут быть недоступны.", "OK");
+        }
+        else
+        {
+            Console.WriteLine("[MainPage] Соединение с интернетом восстановлено.");
+            // Можно добавить повторную загрузку данных
+        }
+    });
+}
 
         private void OnPrivatePersonCheckedChanged(object sender, CheckedChangedEventArgs e)
         {
@@ -249,27 +266,43 @@ namespace Aquatir
         }
 
         private async Task CheckForNewProductsAsync()
+{
+    try
+    {
+        // Проверяем доступность сети перед выполнением операции
+        var current = Connectivity.Current;
+        if (current.NetworkAccess != NetworkAccess.Internet)
         {
-            await Task.Run(() =>
-            {
-                foreach (var group in ProductCache.CachedProducts)
-                {
-                    if (group.Value.Any(product => product.IsNew && !HasProductBeenSeen(product.Name)))
-                    {
-                        Device.BeginInvokeOnMainThread(() =>
-                        {
-                            var button = GroupButtonsStackLayout.Children
-                                .OfType<Button>()
-                                .FirstOrDefault(b => b.Text == group.Key);
-                            if (button != null)
-                            {
-                                UpdateGroupBorderColor(button, group.Key);
-                            }
-                        });
-                    }
-                }
-            });
+            Console.WriteLine("[MainPage] Нет подключения к интернету. Проверка новых продуктов отменена.");
+            return;
         }
+        
+        await Task.Run(() =>
+        {
+            foreach (var group in ProductCache.CachedProducts)
+            {
+                if (group.Value.Any(product => product.IsNew && !HasProductBeenSeen(product.Name)))
+                {
+                    Device.BeginInvokeOnMainThread(() =>
+                    {
+                        var button = GroupButtonsStackLayout.Children
+                            .OfType<Button>()
+                            .FirstOrDefault(b => b.Text == group.Key);
+                        if (button != null)
+                        {
+                            UpdateGroupBorderColor(button, group.Key);
+                        }
+                    });
+                }
+            }
+        });
+    }
+    catch (Exception ex)
+    {
+        // Логируем ошибку, но не пробрасываем её дальше
+        Console.WriteLine($"[MainPage] Ошибка при проверке новых продуктов: {ex.Message}");
+    }
+}
         private async void OnSendOrdersClicked(object sender, EventArgs e)
         {
             var selectedOrders = OrdersCollectionView.SelectedItems.Cast<Order>().ToList();
@@ -414,32 +447,38 @@ namespace Aquatir
         }
        
         private async Task ReloadProductCacheAsync()
+{
+    Console.WriteLine("[MainPage] Перезагрузка кэша продукции...");
+    try
+    {
+        // Проверяем доступность сети перед попыткой загрузить данные
+        var current = Connectivity.Current;
+        if (current.NetworkAccess != NetworkAccess.Internet)
         {
-            Console.WriteLine("[MainPage] Перезагрузка кэша продукции...");
-            try
-            {
-                var databaseService = new DatabaseService();
-                var productGroups = await databaseService.LoadProductGroupsAsync();
-
-                if (productGroups == null || productGroups.Count == 0)
-                {
-                    // Логирование без блокировки UI
-                    Device.BeginInvokeOnMainThread(() =>
-                        Console.WriteLine("[MainPage] CRITICAL: Продукты не загружены!")
-                    );
-                    return;
-                }
-
-                ProductCache.CachedProducts = productGroups;
-            }
-            catch (Exception ex)
-            {
-                Device.BeginInvokeOnMainThread(() => {
-                    Console.WriteLine($"[MainPage] Ошибка при перезагрузке кэша продукции: {ex.Message}");
-                    DisplayAlert("Ошибка", "Не удалось загрузить продукты.", "OK");
-                });
-            }
+            Console.WriteLine("[MainPage] Нет подключения к интернету. Перезагрузка кэша отменена.");
+            return; // Просто выходим без ошибки
         }
+        
+        var databaseService = new DatabaseService();
+        var productGroups = await databaseService.LoadProductGroupsAsync();
+
+        if (productGroups == null || productGroups.Count == 0)
+        {
+            // Логирование без блокировки UI
+            Device.BeginInvokeOnMainThread(() =>
+                Console.WriteLine("[MainPage] CRITICAL: Продукты не загружены!")
+            );
+            return;
+        }
+
+        ProductCache.CachedProducts = productGroups;
+    }
+    catch (Exception ex)
+    {
+        // Логируем ошибку, но не пробрасываем её дальше
+        Console.WriteLine($"[MainPage] Ошибка при перезагрузке кэша продукции: {ex.Message}");
+    }
+}
 
         protected override async void OnAppearing()
         {
@@ -469,7 +508,10 @@ namespace Aquatir
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Ошибка", "Не удалось загрузить данные. Перезапустите приложение.", "OK");
+                Console.WriteLine($"[MainPage] Ошибка при загрузке данных: {ex.Message}");
+                await DisplayAlert("Предупреждение", "Не удалось загрузить данные из-за проблем с сетью. Некоторые функции могут быть недоступны.", "OK");
+                IsDataLoaded = true;
+                UpdateGroupButtonsState();
             }
         }
         private void UpdateGroupButtonsState()
@@ -516,10 +558,20 @@ namespace Aquatir
         }
 
         private async Task ValidateProductCache()
+{
+    try
+    {
+        if (ProductCache.CachedProducts != null && ProductCache.CachedProducts.Count > 0)
         {
-            if (ProductCache.CachedProducts != null && ProductCache.CachedProducts.Count > 0)
+            Console.WriteLine("[MainPage] Продукция загружена");
+        }
+        else
+        {
+            var current = Connectivity.Current;
+            if (current.NetworkAccess != NetworkAccess.Internet)
             {
-                Console.WriteLine("[MainPage] Продукция загружена");
+                Console.WriteLine("[MainPage] Нет подключения к интернету. Продукция не загружена.");
+                await DisplayAlert("Предупреждение", "Нет подключения к интернету. Продукты не загружены.", "OK");
             }
             else
             {
@@ -527,31 +579,47 @@ namespace Aquatir
                 await DisplayAlert("Ошибка", "Не удалось загрузить продукты. Попробуйте ещё раз.", "OK");
             }
         }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[MainPage] Ошибка при проверке кэша продукции: {ex.Message}");
+    }
+}
         private async Task LoadDataAsync()
+{
+    Console.WriteLine("[MainPage] Загрузка данных...");
+    try
+    {
+        // Проверяем доступность сети перед попыткой загрузить данные
+        var current = Connectivity.Current;
+        if (current.NetworkAccess != NetworkAccess.Internet)
         {
-            Console.WriteLine("[MainPage] Загрузка данных...");
-            try
-            {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)); // Таймаут 10 секунд
-                var databaseService = new DatabaseService();
-                var productGroups = await databaseService.LoadProductGroupsAsync().WaitAsync(cts.Token);
-
-                Console.WriteLine($"[MainPage] Загружено {productGroups.Count} групп продукции.");
-            }
-            catch (OperationCanceledException)
-            {
-                await DisplayAlert("Ошибка", "Время загрузки данных истекло. Проверьте подключение.", "OK");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[MainPage] Ошибка при загрузке данных: {ex.Message}");
-                await DisplayAlert("Ошибка", "Не удалось загрузить данные. Перезапустите приложение.", "OK");
-            }
+            Console.WriteLine("[MainPage] Нет подключения к интернету. Загрузка отменена.");
+            return; // Просто выходим без ошибки
         }
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)); // Таймаут 10 секунд
+        var databaseService = new DatabaseService();
+        var productGroups = await databaseService.LoadProductGroupsAsync().WaitAsync(cts.Token);
+
+        Console.WriteLine($"[MainPage] Загружено {productGroups.Count} групп продукции.");
+    }
+    catch (OperationCanceledException)
+    {
+        Console.WriteLine("[MainPage] Время загрузки данных истекло.");
+        // Не пробрасываем исключение дальше
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[MainPage] Ошибка при загрузке данных: {ex.Message}");
+        // Не пробрасываем исключение дальше
+    }
+}
 
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
+            Connectivity.Current.ConnectivityChanged -= Current_ConnectivityChanged;
 
             try
             {
