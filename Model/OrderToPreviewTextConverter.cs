@@ -11,6 +11,7 @@ namespace Aquatir
         private DateTime _orderDate = DateTime.Now;
         private string _comment = string.Empty;
         private List<ProductItem> _products = new List<ProductItem>();
+        public bool IsAdditionalOrder { get; set; }
 
         public decimal TotalAmount
         {
