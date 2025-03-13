@@ -595,8 +595,15 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             }
             else
             {
-                Console.WriteLine("[MainPage] CRITICAL: Продукция НЕ загружена!");
-                await DisplayAlert("Ошибка", "Не удалось загрузить продукты. Попробуйте ещё раз.", "OK");
+                Console.WriteLine("[MainPage] Продукция не загружена, пробуем загрузить...");
+                await ReloadProductCacheAsync();
+                AppState.IsDatabaseLoaded = true;
+                
+                // Проверяем, удалось ли загрузить данные
+                if (ProductCache.CachedProducts == null || ProductCache.CachedProducts.Count == 0)
+                {
+                    await DisplayAlert("Ошибка", "Не удалось загрузить продукты. Попробуйте ещё раз.", "OK");
+                }
             }
         }
     }
