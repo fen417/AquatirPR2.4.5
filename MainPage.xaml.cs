@@ -342,12 +342,12 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
 {
     if (e.Value)
     {
-        // Если чекбокс активирован, добавляем текст "дозаявка" в письмо
+        // Если чекбокс активирован, добавляем текст "доп. заявка" в письмо
         _currentOrder.IsAdditionalOrder = true;
     }
     else
     {
-        // Если чекбокс деактивирован, убираем текст "дозаявка" из письма
+        // Если чекбокс деактивирован, убираем текст "доп. заявка" из письма
         _currentOrder.IsAdditionalOrder = false;
     }
 }
@@ -408,10 +408,10 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 bodyText += $"<div><br/><font size='3'>Комментарий к заказу: <i>{order.Comment}</i></font></div>";
             }
 
-            // Добавляем "дозаявка" в письмо, если чекбокс активирован
+            // Добавляем "доп. заявка" в письмо, если чекбокс активирован
             if (order.IsAdditionalOrder)
             {
-                bodyText += "<div><br/><font size='3'><b>дозаявка</b></font></div>";
+                bodyText += "<div><br/><font size='3'><b>доп. заявка</b></font></div>";
             }
 
             bodyText += "<div><br/></div>";
