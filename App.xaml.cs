@@ -17,12 +17,31 @@ namespace Aquatir
         public App()
         {
             InitializeComponent();
+            InitializeDatabaseAsync();
             AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
             {
                 Console.WriteLine($"[App] Необработанное исключение: {args.ExceptionObject}");
             };
             LoadProductsOnStartup();
         }
+        
+        private async void InitializeDatabaseAsync()
+    {
+        try
+        {
+            Console.WriteLine("[App] Инициализация базы данных...");
+            var databaseService = new DatabaseService();
+            var productGroups = await databaseService.LoadProductGroupsAsync();
+            ProductCache.CachedProducts = productGroups;
+            AppState.IsDatabaseLoaded = true;
+            Console.WriteLine("[App] База данных инициализирована успешно.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[App] Ошибка при инициализации базы данных: {ex.Message}");
+            // В случае ошибки инициализации БД приложение попытается загрузить её позже
+        }
+    }
 
         private async void LoadProductsOnStartup()
         {
