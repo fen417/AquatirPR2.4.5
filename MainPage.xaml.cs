@@ -21,6 +21,10 @@ namespace Aquatir
         public bool ShowCityPicker { get; set; }
         public bool IsManager { get; set; }
         public bool IsNotManager => !IsManager;
+        public static class AppState
+{
+    public static bool IsDatabaseLoaded { get; set; } = false;
+}
 
         public MainPage()
         {
@@ -468,15 +472,22 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
        
         private async Task ReloadProductCacheAsync()
 {
+    // Проверяем, были ли данные уже загружены
+    if (AppState.IsDatabaseLoaded && ProductCache.CachedProducts.Count > 0)
+    {
+        Console.WriteLine("[MainPage] Кэш продукции уже загружен, пропускаем перезагрузку.");
+        return;
+    }
+
     Console.WriteLine("[MainPage] Перезагрузка кэша продукции...");
     try
     {
-        // Проверяем доступность сети перед попыткой загрузить данные
+        // Проверяем доступность сети
         var current = Connectivity.Current;
         if (current.NetworkAccess != NetworkAccess.Internet)
         {
             Console.WriteLine("[MainPage] Нет подключения к интернету. Перезагрузка кэша отменена.");
-            return; // Просто выходим без ошибки
+            return;
         }
         
         var databaseService = new DatabaseService();
@@ -484,7 +495,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
 
         if (productGroups == null || productGroups.Count == 0)
         {
-            // Логирование без блокировки UI
             Device.BeginInvokeOnMainThread(() =>
                 Console.WriteLine("[MainPage] CRITICAL: Продукты не загружены!")
             );
@@ -492,48 +502,55 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
         }
 
         ProductCache.CachedProducts = productGroups;
+        AppState.IsDatabaseLoaded = true;
     }
     catch (Exception ex)
     {
-        // Логируем ошибку, но не пробрасываем её дальше
         Console.WriteLine($"[MainPage] Ошибка при перезагрузке кэша продукции: {ex.Message}");
     }
 }
 
         protected override async void OnAppearing()
+{
+    base.OnAppearing();
+    Console.WriteLine("[MainPage] Страница отображается.");
+
+    // Блокируем кнопки групп
+    IsDataLoaded = false;
+    UpdateGroupButtonsState();
+
+    try
+    {
+        // Загружаем данные только если они не были загружены в App.xaml.cs
+        if (!AppState.IsDatabaseLoaded)
         {
-            base.OnAppearing();
-            Console.WriteLine("[MainPage] Страница отображается.");
-
-            // Блокируем кнопки групп
-            IsDataLoaded = false;
-            UpdateGroupButtonsState();
-
-            try
-            {
-                await Task.WhenAll(
-                    LoadDataAsync(),
-                    Task.Run(LoadSeenProducts),
-                    ReloadProductCacheAsync(),
-                    CheckForNewProductsAsync()
-                );
-
-                RestoreSelectedDate();
-                RestoreCurrentOrder();
-                await ValidateProductCache();
-
-                // Разблокируем кнопки групп после загрузки данных
-                IsDataLoaded = true;
-                UpdateGroupButtonsState();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[MainPage] Ошибка при загрузке данных: {ex.Message}");
-                await DisplayAlert("Предупреждение", "Не удалось загрузить данные из-за проблем с сетью. Некоторые функции могут быть недоступны.", "OK");
-                IsDataLoaded = true;
-                UpdateGroupButtonsState();
-            }
+            Console.WriteLine("[MainPage] База данных не была загружена ранее, загружаем...");
+            // Пытаемся загрузить данные, если они не были загружены при запуске
+            await ValidateProductCache();
         }
+        else
+        {
+            Console.WriteLine("[MainPage] База данных уже загружена, пропускаем загрузку.");
+        }
+        
+        // Эти операции выполняем всегда
+        await Task.Run(LoadSeenProducts);
+        await CheckForNewProductsAsync();
+        RestoreSelectedDate();
+        RestoreCurrentOrder();
+
+        // Разблокируем кнопки групп после загрузки данных
+        IsDataLoaded = true;
+        UpdateGroupButtonsState();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[MainPage] Ошибка при загрузке данных: {ex.Message}");
+        await DisplayAlert("Предупреждение", "Не удалось загрузить данные из-за проблем с сетью. Некоторые функции могут быть недоступны.", "OK");
+        IsDataLoaded = true;
+        UpdateGroupButtonsState();
+    }
+}
         private void UpdateGroupButtonsState()
         {
             foreach (var button in GroupButtonsStackLayout.Children.OfType<Button>())
@@ -584,6 +601,7 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
         if (ProductCache.CachedProducts != null && ProductCache.CachedProducts.Count > 0)
         {
             Console.WriteLine("[MainPage] Продукция загружена");
+            AppState.IsDatabaseLoaded = true; // Установим флаг, что данные загружены
         }
         else
         {
@@ -595,12 +613,19 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             }
             else
             {
-                Console.WriteLine("[MainPage] Продукция не загружена, пробуем загрузить...");
-                await ReloadProductCacheAsync();
-                AppState.IsDatabaseLoaded = true;
+                Console.WriteLine("[MainPage] Продукция не загружена, загружаем...");
                 
-                // Проверяем, удалось ли загрузить данные
-                if (ProductCache.CachedProducts == null || ProductCache.CachedProducts.Count == 0)
+                // Если данные не были загружены в App.xaml.cs, загружаем их здесь
+                var databaseService = new DatabaseService();
+                var productGroups = await databaseService.LoadProductGroupsAsync();
+                
+                if (productGroups != null && productGroups.Count > 0)
+                {
+                    ProductCache.CachedProducts = productGroups;
+                    AppState.IsDatabaseLoaded = true;
+                    Console.WriteLine("[MainPage] Продукция успешно загружена");
+                }
+                else
                 {
                     await DisplayAlert("Ошибка", "Не удалось загрузить продукты. Попробуйте ещё раз.", "OK");
                 }
@@ -614,32 +639,34 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
 }
         private async Task LoadDataAsync()
 {
+    // Проверяем, были ли данные уже загружены
+    if (AppState.IsDatabaseLoaded && ProductCache.CachedProducts.Count > 0)
+    {
+        Console.WriteLine("[MainPage] Данные уже загружены, пропускаем загрузку.");
+        return;
+    }
+
     Console.WriteLine("[MainPage] Загрузка данных...");
     try
     {
-        // Проверяем доступность сети перед попыткой загрузить данные
+        // Проверяем доступность сети
         var current = Connectivity.Current;
         if (current.NetworkAccess != NetworkAccess.Internet)
         {
             Console.WriteLine("[MainPage] Нет подключения к интернету. Загрузка отменена.");
-            return; // Просто выходим без ошибки
+            return;
         }
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)); // Таймаут 10 секунд
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         var databaseService = new DatabaseService();
         var productGroups = await databaseService.LoadProductGroupsAsync().WaitAsync(cts.Token);
 
         Console.WriteLine($"[MainPage] Загружено {productGroups.Count} групп продукции.");
-    }
-    catch (OperationCanceledException)
-    {
-        Console.WriteLine("[MainPage] Время загрузки данных истекло.");
-        // Не пробрасываем исключение дальше
+        AppState.IsDatabaseLoaded = true;
     }
     catch (Exception ex)
     {
         Console.WriteLine($"[MainPage] Ошибка при загрузке данных: {ex.Message}");
-        // Не пробрасываем исключение дальше
     }
 }
 
