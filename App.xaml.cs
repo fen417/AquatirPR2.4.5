@@ -205,4 +205,8 @@ namespace Aquatir
             return DateTime.MinValue;
         }
     }
+    public static class AppState
+{
+    public static bool IsDatabaseLoaded { get; set; } = false;
+}
 }
