@@ -75,7 +75,7 @@
     <CheckBox x:Name="IsAdditionalOrderCheckBox" 
               IsVisible="{Binding IsNotManager}" 
               CheckedChanged="OnAdditionalOrderCheckedChanged" />
-    <Label Text="дозаявка" 
+    <Label Text="доп. заявка" 
            IsVisible="{Binding IsNotManager}" 
            VerticalOptions="Center" 
            FontSize="16">
