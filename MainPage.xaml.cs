@@ -359,45 +359,36 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
 {
     var groupOrder = ProductCache.CachedProducts.Keys.ToList();
     var ordersByDate = selectedOrders.GroupBy(o => o.OrderDate).ToList();
-
     foreach (var orderGroup in ordersByDate)
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("Aquatir", "rep.1958@mail.ru"));
         message.To.Add(new MailboxAddress("Получатель", "andreypir16@gmail.com"));
-
         var customerNames = orderGroup.Select(o => o.CustomerName).Distinct();
         string orderDateText = orderGroup.Key.ToString("dd.MM.yyyy");
-
-        message.Subject = $"Заявка от {string.Join(", ", customerNames)} на {orderDateText}";
-
+        bool hasAdditionalOrder = orderGroup.Any(o => o.IsAdditionalOrder);
+        string additionalOrderText = hasAdditionalOrder ? " (доп. заявка)" : "";
+        message.Subject = $"Заявка от {string.Join(", ", customerNames)}{additionalOrderText} на {orderDateText}";
+        
         var bodyBuilder = new BodyBuilder();
-
         foreach (var order in orderGroup)
         {
             var directionText = !string.IsNullOrWhiteSpace(order.Direction) ? order.Direction : "Не указано";
             var bodyText = $"<div><b><u><font size='5'>{order.CustomerName} ({directionText}).</font><font size='3'> Заявка на {orderDateText}</font></u></b></div>";
-
             var sortedProducts = order.Products
                 .OrderBy(product => GetProductGroupIndex(RemoveColorTags(product.Name), groupOrder))
                 .ThenBy(product => RemoveColorTags(product.Name), StringComparer.OrdinalIgnoreCase)
                 .ThenBy(product => product.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
-
             // Разделение на основной список и горячее копчение
             var hotSmokingProducts = sortedProducts
                 .Where(p => p.Name.Contains("г/к", StringComparison.OrdinalIgnoreCase))
                 .ToList();
-
             var regularProducts = sortedProducts.Except(hotSmokingProducts).ToList();
-
-            // Формируем основной список продуктов
             foreach (var product in regularProducts)
             {
                 bodyText += $"<div> <font size='3'>{product.DisplayName} - {product.DisplayQuantity}</font></div>";
             }
-
-            // Добавляем горячее копчение отдельным блоком
             if (hotSmokingProducts.Any())
             {
                 bodyText += "<div><br/><b> <font size='3'>Горячее копчение:</font></b></div>";
@@ -406,34 +397,25 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                     bodyText += $"<div> <font size='3'>{product.DisplayName} - {product.DisplayQuantity}</font></div>";
                 }
             }
-
             if (!string.IsNullOrWhiteSpace(order.Comment))
             {
                 bodyText += $"<div><br/><font size='3'>Комментарий к заказу: <i>{order.Comment}</i></font></div>";
             }
-
-            // Добавляем "доп. заявка" в письмо, если чекбокс активирован
             if (order.IsAdditionalOrder)
             {
                 bodyText += "<div><br/><font size='3'><b>доп. заявка</b></font></div>";
             }
-
             bodyText += "<div><br/></div>";
-
             bodyBuilder.HtmlBody += bodyText;
         }
-
         message.Body = bodyBuilder.ToMessageBody();
-
         using (var client = new SmtpClient())
         {
             client.ServerCertificateValidationCallback = (s, c, h, e) => true;
-
             try
             {
                 client.Connect("smtp.mail.ru", 465, true);
                 client.Authenticate("rep.1958@mail.ru", "zyxrhkQb4KwE0Udwz2cx");
-
                 client.Send(message);
                 client.Disconnect(true);
             }
