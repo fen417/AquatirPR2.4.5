@@ -3,6 +3,7 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -13,79 +14,152 @@ namespace Aquatir
     {
         private readonly string _groupName;
         private readonly MainPage _mainPage;
+        private List<ProductItem> _allProducts = new List<ProductItem>();
+        private ObservableCollection<ProductItem> _displayedProducts = new ObservableCollection<ProductItem>();
+        private bool _isLoading = false;
+        private int _currentPage = 0;
+        private const int PAGE_SIZE = 30;
+        private string _searchText = string.Empty;
 
         public ProductSelectionPage(string groupName, MainPage mainPage)
         {
             InitializeComponent();
             _groupName = groupName;
             _mainPage = mainPage;
+            ProductCollectionView.ItemsSource = _displayedProducts;
+            if (_groupName == "Р’СЃСЏ РїСЂРѕРґСѓРєС†РёСЏ")
+            {
+                ProductCollectionView.RemainingItemsThreshold = 5;
+                ProductCollectionView.RemainingItemsThresholdReached += OnRemainingItemsThresholdReached;
+            }
+            
             LoadProducts();
         }
 
         public void LoadProducts()
         {
-            bool showPackagedProducts = Preferences.Get("ShowPackagedProducts", true);
-
-            List<ProductItem> filteredProducts;
-
-            if (_groupName == "Вся продукция")
+            ShowLoadingIndicator();
+            
+            Task.Run(() =>
             {
-                // Собираем все продукты из всех групп
-                filteredProducts = ProductCache.CachedProducts.Values
-                    .SelectMany(products => products)
-                    .Where(product =>
+                try
+                {
+                    bool showPackagedProducts = Preferences.Get("ShowPackagedProducts", true);
+                    _allProducts.Clear();
+                    _displayedProducts.Clear();
+                    _currentPage = 0;
+                    if (_groupName == "Р’СЃСЏ РїСЂРѕРґСѓРєС†РёСЏ")
                     {
-                        if (!showPackagedProducts)
+                        foreach (var group in ProductCache.CachedProducts)
                         {
-                            return !product.Name.EndsWith("УП.", StringComparison.OrdinalIgnoreCase);
+                            var productsInGroup = group.Value.Where(product =>
+                            {
+                                if (!showPackagedProducts)
+                                {
+                                    return !product.Name.EndsWith("РЈРџ.", StringComparison.OrdinalIgnoreCase);
+                                }
+                                return true;
+                            });
+
+                            _allProducts.AddRange(productsInGroup);
                         }
-                        return true;
-                    }).ToList();
-            }
-            else
+                    }
+                    else
+                    {
+                        if (ProductCache.CachedProducts.ContainsKey(_groupName))
+                        {
+                            _allProducts = ProductCache.CachedProducts[_groupName].Where(product =>
+                            {
+                                if ((_groupName == "РҐРѕР»РѕРґРЅРѕРµ РљРѕРїС‡РµРЅРёРµ" || _groupName == "Р’СЏР»РµРЅР°СЏ РџСЂРѕРґСѓРєС†РёСЏ") && !showPackagedProducts)
+                                {
+                                    return !product.Name.EndsWith("РЈРџ.", StringComparison.OrdinalIgnoreCase);
+                                }
+                                return true;
+                            }).ToList();
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(_searchText))
+                    {
+                        _allProducts = _allProducts
+                            .Where(product => product.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+                    }
+
+                    _allProducts = _allProducts.OrderBy(p => p.Name).ToList();
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        if (_groupName == "Р’СЃСЏ РїСЂРѕРґСѓРєС†РёСЏ")
+                        {
+                            LoadNextPage();
+                        }
+                        else
+                        {
+                            foreach (var product in _allProducts)
+                            {
+                                _displayedProducts.Add(product);
+                            }
+                        }
+                        
+                        HideLoadingIndicator();
+                    });
+                }
+                catch (Exception ex)
+                {
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        DisplayAlert("РћС€РёР±РєР°", $"РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РїСЂРѕРґСѓРєС‚С‹: {ex.Message}", "OK");
+                        HideLoadingIndicator();
+                    });
+                }
+            });
+        }
+
+        private void OnRemainingItemsThresholdReached(object sender, EventArgs e)
+        {
+            if (_groupName == "Р’СЃСЏ РїСЂРѕРґСѓРєС†РёСЏ" && !_isLoading)
             {
-                // Фильтруем продукты для конкретной группы
-                filteredProducts = ProductCache.CachedProducts.ContainsKey(_groupName)
-                    ? ProductCache.CachedProducts[_groupName].Where(product =>
-                    {
-                        if ((_groupName == "Холодное Копчение" || _groupName == "Вяленая Продукция") && !showPackagedProducts)
-                        {
-                            return !product.Name.EndsWith("УП.", StringComparison.OrdinalIgnoreCase);
-                        }
-                        return true;
-                    }).ToList()
-                    : new List<ProductItem>();
+                LoadNextPage();
             }
+        }
 
-            ProductCollectionView.ItemsSource = filteredProducts;
+        private void LoadNextPage()
+        {
+            if (_isLoading || _currentPage * PAGE_SIZE >= _allProducts.Count)
+                return;
 
-            Console.WriteLine("Продукты загружены и отфильтрованы.");
-            HideLoadingIndicator();
+            _isLoading = true;
+
+            try
+            {
+                int startIndex = _currentPage * PAGE_SIZE;
+                int itemsToLoad = Math.Min(PAGE_SIZE, _allProducts.Count - startIndex);
+
+                if (itemsToLoad <= 0)
+                    return;
+
+                var newItems = _allProducts.GetRange(startIndex, itemsToLoad);
+
+                foreach (var product in newItems)
+                {
+                    _displayedProducts.Add(product);
+                }
+
+                _currentPage++;
+            }
+            finally
+            {
+                _isLoading = false;
+            }
         }
 
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
-            string searchText = e.NewTextValue?.Trim() ?? string.Empty;
-            List<ProductItem> filteredProducts;
-
-            if (_groupName == "Вся продукция")
-            {
-                filteredProducts = ProductCache.CachedProducts.Values
-                    .SelectMany(products => products)
-                    .Where(product => string.IsNullOrEmpty(searchText) ||
-                                      product.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-            else
-            {
-                filteredProducts = ProductCache.CachedProducts.ContainsKey(_groupName)
-                    ? ProductCache.CachedProducts[_groupName].Where(product =>
-                        string.IsNullOrEmpty(searchText) ||
-                        product.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)).ToList()
-                    : new List<ProductItem>();
-            }
-
-            ProductCollectionView.ItemsSource = filteredProducts;
+            _searchText = e.NewTextValue?.Trim() ?? string.Empty;
+            _allProducts.Clear();
+            _displayedProducts.Clear();
+            _currentPage = 0;
+            LoadProducts();
         }
 
         private void ShowLoadingIndicator()
@@ -124,7 +198,7 @@ namespace Aquatir
                 }
                 else if (DeviceInfo.Platform == DevicePlatform.Android)
                 {
-                    string result = await DisplayPromptAsync("Введите количество", $"Введите количество для {cleanProductName}", "OK", "Отмена", keyboard: Keyboard.Numeric);
+                    string result = await DisplayPromptAsync("РЈРєР°Р¶РёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ", $"РЈРєР°Р¶РёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ РґР»СЏ {cleanProductName}", "OK", "РћС‚РјРµРЅР°", keyboard: Keyboard.Numeric);
 
                     if (!string.IsNullOrWhiteSpace(result))
                     {
@@ -132,7 +206,7 @@ namespace Aquatir
                         if (decimal.TryParse(result, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal quantity) && quantity > 0)
                         {
                             _mainPage.AddProductToOrder(cleanProductName, quantity);
-                            await DisplayAlert("Успех", $"{cleanProductName} успешно добавлен(а) в заказ.", "OK");
+                            await DisplayAlert("РЈСЃРїРµС…", $"{cleanProductName} СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ(Р°) РІ Р·Р°РєР°Р·.", "OK");
 
                             if (Preferences.Get("AutoReturnEnabled", false))
                             {
@@ -141,7 +215,7 @@ namespace Aquatir
                         }
                         else
                         {
-                            await DisplayAlert("Ошибка", "Введите корректное количество.", "OK");
+                            await DisplayAlert("РћС€РёР±РєР°", "РЈРєР°Р¶РёС‚Рµ РєРѕСЂСЂРµРєС‚РЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ.", "OK");
                         }
                     }
                 }
@@ -162,7 +236,7 @@ namespace Aquatir
                 QuantityEntry = new Entry
                 {
                     Keyboard = Keyboard.Numeric,
-                    Placeholder = "Введите количество",
+                    Placeholder = "РЈРєР°Р¶РёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ",
                     HorizontalOptions = LayoutOptions.FillAndExpand,
                     VerticalOptions = LayoutOptions.Start,
                     HeightRequest = 50,
@@ -230,7 +304,7 @@ namespace Aquatir
                 }
                 else
                 {
-                    Application.Current.MainPage.DisplayAlert("Ошибка", "Введите корректное количество.", "OK");
+                    Application.Current.MainPage.DisplayAlert("РћС€РёР±РєР°", "РЈРєР°Р¶РёС‚Рµ РєРѕСЂСЂРµРєС‚РЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ.", "OK");
                 }
             }
         }
