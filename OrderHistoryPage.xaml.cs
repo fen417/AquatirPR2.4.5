@@ -36,8 +36,6 @@ namespace Aquatir
             {
                 var orderHistoryService = new OrderHistoryService();
                 orderHistoryService.ClearOrderHistory();
-
-                // Обновляем список заказов
                 OrdersListView.ItemsSource = new List<Order>();
 
                 await DisplayAlert("Успех", "История заказов успешно очищена.", "OK");

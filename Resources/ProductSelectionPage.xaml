@@ -17,10 +17,10 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- Поиск -->
         <SearchBar x:Name="ProductSearchBar"
                    Placeholder="Поиск продукта по наименованию"
                    TextChanged="OnSearchTextChanged"
@@ -28,54 +28,64 @@
                    Margin="10"
                    FontSize="16" />
 
-        <ScrollView Grid.Row="2" Padding="10">
-            <CollectionView x:Name="ProductCollectionView"
-                            SelectionMode="Single"
-                            SelectionChanged="OnProductSelected">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <StackLayout Orientation="Horizontal" Padding="10,5">
+        <!-- Список продукции -->
+        <CollectionView x:Name="ProductCollectionView"
+                        Grid.Row="1"
+                        SelectionMode="Single"
+                        SelectionChanged="OnProductSelected"
+                        Margin="10">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <StackLayout Orientation="Horizontal" Padding="10,5">
+                        <!-- Маркер -->
+                        <Label Text="•" FontSize="16" />
 
-                            <Label Text="•" FontSize="16" />
-                            <Label FontSize="16" Margin="5,0,0,0">
-                                <Label.FormattedText>
-                                    <Binding Path="Name" Converter="{StaticResource NameToFormattedStringConverter}" />
-                                </Label.FormattedText>
-                            </Label>
-                            <Label Text="{Binding DisplayPrice}" FontSize="16" Margin="10,0,0,0" />
-                            
-                            <Label Text="{Binding IsNew, Converter={StaticResource BooleanToTextConverter}}" 
-                            FontSize="16" 
-                            TextColor="Red" 
-                            IsVisible="{Binding IsNew}" 
-                            VerticalOptions="Center" 
-                            HorizontalOptions="Start" />
+                        <!-- Название продукта -->
+                        <Label FontSize="16" Margin="5,0,0,0">
+                            <Label.FormattedText>
+                                <Binding Path="Name" Converter="{StaticResource NameToFormattedStringConverter}" />
+                            </Label.FormattedText>
+                        </Label>
 
-                            <Label Text="{Binding IsEnd, Converter={StaticResource BooleanToEndConverter}}" 
-                            FontSize="16" 
-                            TextColor="Orange" 
-                            IsVisible="{Binding IsEnd}" 
-                            VerticalOptions="Center" 
-                            HorizontalOptions="Start" />
+                        <!-- Цена -->
+                        <Label Text="{Binding DisplayPrice}" 
+                               FontSize="16" 
+                               Margin="10,0,0,0" />
 
-                            <Label Text="{Binding IsRes, Converter={StaticResource BooleanToRestockedTextConverter}}" 
-                            FontSize="16" 
-                            TextColor="Green" 
-                            IsVisible="{Binding IsRes}" 
-                            VerticalOptions="Center" 
-                            HorizontalOptions="Start" />
+                        <!-- Новинка -->
+                        <Label Text="{Binding IsNew, Converter={StaticResource BooleanToTextConverter}}" 
+                               FontSize="16" 
+                               TextColor="Red" 
+                               IsVisible="{Binding IsNew}" 
+                               VerticalOptions="Center" 
+                               HorizontalOptions="Start" />
 
-                        </StackLayout>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </ScrollView>
+                        <!-- Заканчивается -->
+                        <Label Text="{Binding IsEnd, Converter={StaticResource BooleanToEndConverter}}" 
+                               FontSize="16" 
+                               TextColor="Orange" 
+                               IsVisible="{Binding IsEnd}" 
+                               VerticalOptions="Center" 
+                               HorizontalOptions="Start" />
 
+                        <!-- В наличии -->
+                        <Label Text="{Binding IsRes, Converter={StaticResource BooleanToRestockedTextConverter}}" 
+                               FontSize="16" 
+                               TextColor="Green" 
+                               IsVisible="{Binding IsRes}" 
+                               VerticalOptions="Center" 
+                               HorizontalOptions="Start" />
+                    </StackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Индикатор загрузки -->
         <ActivityIndicator x:Name="LoadingIndicator"
                            IsRunning="False"
                            IsVisible="False"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"
-                           Grid.RowSpan="3" />
+                           Grid.RowSpan="2" />
     </Grid>
 </ContentPage>

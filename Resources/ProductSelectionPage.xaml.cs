@@ -36,18 +36,17 @@ namespace Aquatir
             LoadProducts();
         }
 
-        public void LoadProducts()
+        public async void LoadProducts()
         {
             ShowLoadingIndicator();
-            
-            Task.Run(() =>
+
+            await Task.Run(async () =>
             {
                 try
                 {
                     bool showPackagedProducts = Preferences.Get("ShowPackagedProducts", true);
-                    _allProducts.Clear();
-                    _displayedProducts.Clear();
-                    _currentPage = 0;
+                    List<ProductItem> tempProducts = new List<ProductItem>();
+
                     if (_groupName == "Вся продукция")
                     {
                         foreach (var group in ProductCache.CachedProducts)
@@ -61,14 +60,14 @@ namespace Aquatir
                                 return true;
                             });
 
-                            _allProducts.AddRange(productsInGroup);
+                            tempProducts.AddRange(productsInGroup);
                         }
                     }
                     else
                     {
                         if (ProductCache.CachedProducts.ContainsKey(_groupName))
                         {
-                            _allProducts = ProductCache.CachedProducts[_groupName].Where(product =>
+                            tempProducts = ProductCache.CachedProducts[_groupName].Where(product =>
                             {
                                 if ((_groupName == "Холодное Копчение" || _groupName == "Вяленая Продукция") && !showPackagedProducts)
                                 {
@@ -81,32 +80,36 @@ namespace Aquatir
 
                     if (!string.IsNullOrEmpty(_searchText))
                     {
-                        _allProducts = _allProducts
+                        tempProducts = tempProducts
                             .Where(product => product.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
                             .ToList();
                     }
 
-                    _allProducts = _allProducts.OrderBy(p => p.Name).ToList();
-                    MainThread.BeginInvokeOnMainThread(() =>
+                    tempProducts = tempProducts.OrderBy(p => p.Name).ToList();
+
+                    // Update all products on background thread
+                    _allProducts = tempProducts;
+
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
                     {
                         if (_groupName == "Вся продукция")
                         {
-                            LoadNextPage();
+                            // Load first page immediately
+                            await LoadNextPage();
                         }
                         else
                         {
-                            foreach (var product in _allProducts)
-                            {
-                                _displayedProducts.Add(product);
-                            }
+                            // For smaller groups, just replace the entire collection at once
+                            _displayedProducts = new ObservableCollection<ProductItem>(_allProducts);
+                            ProductCollectionView.ItemsSource = _displayedProducts;
                         }
-                        
+
                         HideLoadingIndicator();
                     });
                 }
                 catch (Exception ex)
                 {
-                    MainThread.BeginInvokeOnMainThread(() =>
+                    await MainThread.InvokeOnMainThreadAsync(() =>
                     {
                         DisplayAlert("Ошибка", $"Не удалось загрузить продукты: {ex.Message}", "OK");
                         HideLoadingIndicator();
@@ -119,11 +122,13 @@ namespace Aquatir
         {
             if (_groupName == "Вся продукция" && !_isLoading)
             {
-                LoadNextPage();
+                MainThread.BeginInvokeOnMainThread(() => {
+                    LoadNextPage();
+                });
             }
         }
 
-        private void LoadNextPage()
+        private async Task LoadNextPage()
         {
             if (_isLoading || _currentPage * PAGE_SIZE >= _allProducts.Count)
                 return;
@@ -140,10 +145,13 @@ namespace Aquatir
 
                 var newItems = _allProducts.GetRange(startIndex, itemsToLoad);
 
-                foreach (var product in newItems)
+                await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    _displayedProducts.Add(product);
-                }
+                    foreach (var item in newItems)
+                    {
+                        _displayedProducts.Add(item);
+                    }
+                });
 
                 _currentPage++;
             }

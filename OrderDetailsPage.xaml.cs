@@ -10,7 +10,7 @@ namespace Aquatir
         public OrderDetailsPage(Order order)
         {
             InitializeComponent();
-            BindingContext = order; // ”станавливаем контекст прив€зки на выбранный заказ
+            BindingContext = order;
         }
 
         private async void OnRestoreOrderClicked(object sender, EventArgs e)
@@ -18,10 +18,7 @@ namespace Aquatir
             var selectedOrder = BindingContext as Order;
             if (selectedOrder != null)
             {
-                // ѕереход на главную страницу
                 await Shell.Current.GoToAsync("//MainPage");
-
-                // ”бедимс€, что текуща€ страница действительно MainPage
                 if (Shell.Current.CurrentPage is MainPage mainPage)
                 {
                     mainPage.RestoreOrderForEditing(selectedOrder); // ¬осстанавливаем заказ
