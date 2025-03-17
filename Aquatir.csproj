@@ -98,29 +98,47 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
     <EnableLLVM>False</EnableLLVM>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidPackageFormat>aab</AndroidPackageFormat>
+    <AndroidKeyStore>False</AndroidKeyStore>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|ARM64'">
     <EnableLLVM>False</EnableLLVM>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidPackageFormat>aab</AndroidPackageFormat>
+    <AndroidKeyStore>False</AndroidKeyStore>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
     <EnableLLVM>False</EnableLLVM>
-    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidPackageFormat>aab</AndroidPackageFormat>
     <AndroidUseAapt2>True</AndroidUseAapt2>
     <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidKeyStore>False</AndroidKeyStore>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|ARM64'">
     <EnableLLVM>False</EnableLLVM>
-    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidPackageFormat>aab</AndroidPackageFormat>
     <AndroidUseAapt2>True</AndroidUseAapt2>
     <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidKeyStore>False</AndroidKeyStore>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release1|net9.0-android|AnyCPU'">
     <EnableLLVM>False</EnableLLVM>
     <RunAOTCompilation>True</RunAOTCompilation>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidPackageFormat>aab</AndroidPackageFormat>
+    <AndroidKeyStore>False</AndroidKeyStore>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release1|net9.0-android|ARM64'">
     <EnableLLVM>False</EnableLLVM>
     <RunAOTCompilation>True</RunAOTCompilation>
+    <AndroidUseAapt2>True</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidPackageFormat>aab</AndroidPackageFormat>
+    <AndroidKeyStore>False</AndroidKeyStore>
   </PropertyGroup>
   <ItemGroup>
     <MauiIcon Include="Resources\AppIcon\aq.png" Color="#512BD4" />

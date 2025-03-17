@@ -11,7 +11,7 @@ namespace Aquatir
     public partial class App : Application
     {
         private static readonly HttpClient client = new HttpClient();
-
+        public static TaskCompletionSource<bool> DatabaseLoadedTcs = new TaskCompletionSource<bool>();
         public bool ReturnToMainMenuAfterAddingProduct { get; set; } = false;
 
         public App()
@@ -22,26 +22,115 @@ namespace Aquatir
             {
                 Console.WriteLine($"[App] Необработанное исключение: {args.ExceptionObject}");
             };
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+            {
+                var exception = args.ExceptionObject as Exception;
+                Console.WriteLine($"[App] Необработанное исключение: {exception?.Message}");
+                Console.WriteLine($"[App] InnerException: {exception?.InnerException?.Message}");
+                Console.WriteLine($"[App] StackTrace: {exception?.StackTrace}");
+            };
             LoadProductsOnStartup();
         }
-        
+
         private async void InitializeDatabaseAsync()
-    {
-        try
         {
-            Console.WriteLine("[App] Инициализация базы данных...");
-            var databaseService = new DatabaseService();
-            var productGroups = await databaseService.LoadProductGroupsAsync();
-            ProductCache.CachedProducts = productGroups;
-            AppState.IsDatabaseLoaded = true;
-            Console.WriteLine("[App] База данных инициализирована успешно.");
+            try
+            {
+                Console.WriteLine("[App] Инициализация базы данных...");
+
+                // Reset the TaskCompletionSource
+                DatabaseLoadedTcs = new TaskCompletionSource<bool>();
+
+                // Check network connectivity
+                var current = Connectivity.Current;
+                if (current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    Console.WriteLine("[App] Нет подключения к интернету. Загрузка базы данных отложена.");
+                    DatabaseLoadedTcs.TrySetResult(false);
+                    return;
+                }
+
+                // First check if we already have cached products
+                if (ProductCache.CachedProducts != null && ProductCache.CachedProducts.Count > 0)
+                {
+                    Console.WriteLine("[App] Продукты уже загружены из кэша.");
+                    AppState.IsDatabaseLoaded = true;
+                    DatabaseLoadedTcs.TrySetResult(true);
+                    return;
+                }
+
+                // Try loading from local database
+                var databaseService = new DatabaseService();
+                var productGroups = await databaseService.LoadProductGroupsAsync();
+
+                if (productGroups != null && productGroups.Count > 0)
+                {
+                    Console.WriteLine("[App] Продукты загружены из локальной базы данных.");
+                    ProductCache.CachedProducts = productGroups;
+                    AppState.IsDatabaseLoaded = true;
+                    DatabaseLoadedTcs.TrySetResult(true);
+                    return;
+                }
+
+                // If database is empty, try loading from Yandex Disk
+                Console.WriteLine("[App] База данных пуста, пробуем загрузить с Яндекс Диска...");
+                string fileUrl = await GetFileDownloadLinkFromYandex();
+
+                if (string.IsNullOrEmpty(fileUrl))
+                {
+                    Console.WriteLine("[App] Не удалось получить ссылку для скачивания.");
+                    DatabaseLoadedTcs.TrySetResult(false);
+                    return;
+                }
+
+                try
+                {
+                    var response = await client.GetAsync(fileUrl);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var lastModifiedHeader = response.Content.Headers.LastModified;
+                        if (lastModifiedHeader.HasValue)
+                        {
+                            ProductCache.SaveLastModified(lastModifiedHeader.Value.DateTime);
+                        }
+
+                        var content = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine("[App] Данные успешно загружены с Яндекс Диска.");
+                        var loadedProductGroups = JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(content);
+
+                        if (loadedProductGroups != null && loadedProductGroups.Count > 0)
+                        {
+                            ProductCache.CachedProducts = loadedProductGroups;
+                            ProductCache.SaveCache();
+
+                            // Save the data to the database for future use
+                            await databaseService.SaveProductGroupsAsync(loadedProductGroups);
+
+                            AppState.IsDatabaseLoaded = true;
+                            DatabaseLoadedTcs.TrySetResult(true);
+                            Console.WriteLine("[App] Данные сохранены в кэш и базу данных.");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("[App] Ошибка загрузки с Яндекс Диска: " + response.StatusCode);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[App] Ошибка при загрузке с Яндекс Диска: {ex.Message}");
+                }
+
+                Console.WriteLine("[App] Не удалось загрузить базу данных. Результат пустой.");
+                DatabaseLoadedTcs.TrySetResult(false);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[App] Ошибка при инициализации базы данных: {ex.Message}");
+                DatabaseLoadedTcs.TrySetResult(false);
+            }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[App] Ошибка при инициализации базы данных: {ex.Message}");
-            // В случае ошибки инициализации БД приложение попытается загрузить её позже
-        }
-    }
 
         private async void LoadProductsOnStartup()
         {
