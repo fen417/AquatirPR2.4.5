@@ -462,6 +462,8 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
         {
             base.OnAppearing();
             Console.WriteLine("[MainPage] Страница отображается.");
+            var notificationManager = new NotificationManager();
+            await notificationManager.CheckAndShowNotificationsAsync();
 
             // Блокируем кнопки групп
             IsDataLoaded = false;
