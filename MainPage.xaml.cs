@@ -357,7 +357,7 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("Aquatir", "rep.1958@mail.ru"));
-        message.To.Add(new MailboxAddress("Получатель", "andreypir16@gmail.com"));
+        message.To.Add(new MailboxAddress("Получатель", "fen559256@gmail.com"));
         var customerNames = orderGroup.Select(o => o.CustomerName).Distinct();
         string orderDateText = orderGroup.Key.ToString("dd.MM.yyyy");
         bool hasAdditionalOrder = orderGroup.Any(o => o.IsAdditionalOrder);
