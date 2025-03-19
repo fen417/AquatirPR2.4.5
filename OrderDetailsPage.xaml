@@ -14,9 +14,10 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
+        <Label Text="{Binding Comment, StringFormat='Комментарий: {0}'}" FontSize="18" Margin="20,0,0,0" />
 
-        <!-- Отображаем общую сумму -->
-        <Label Text="{Binding FormattedTotalAmount}" FontSize="18" Margin="10,0,0,0" />
+        <!-- Отображаем общую сумму 
+        <Label Text="{Binding FormattedTotalAmount}" FontSize="18" Margin="10,0,0,0" /> -->
 
         <!-- Кнопка для восстановления заказа -->
         <Button Text="Восстановить для редактирования"

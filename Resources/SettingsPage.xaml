@@ -29,7 +29,7 @@
                    TextColor="Blue"
                    LineBreakMode="WordWrap" />
             <Label x:Name="VersionLabel" 
-                   Text="Версия программы: r2.8.1 от 18.03.2025" 
+                   Text="Версия программы: r2.8.2 от 19.03.2025" 
                    FontSize="14" 
                    HorizontalOptions="Center" />
         </StackLayout>
