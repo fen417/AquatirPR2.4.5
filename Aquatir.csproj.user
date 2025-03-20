@@ -81,6 +81,9 @@
     <MauiXaml Update="PasswordPage.xaml">
       <SubType>Designer</SubType>
     </MauiXaml>
+    <MauiXaml Update="ProductEditorPage.xaml">
+      <SubType>Designer</SubType>
+    </MauiXaml>
   </ItemGroup>
   <ItemGroup>
     <None Update="Platforms\Windows\Package.appxmanifest">

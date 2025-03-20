@@ -3,35 +3,63 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Aquatir.SettingsPage"
              Title="Настройки">
-    <StackLayout Padding="10">
-        <StackLayout Orientation="Vertical" Spacing="5">
-            <Label Text="Автоматический возврат в главное меню после выбора товара" FontSize="18" />
-            <Switch x:Name="AutoReturnSwitch" Toggled="OnAutoReturnToggled" />
-            <!-- <Label Text="Отображать цену продукции" FontSize="18" />
-            <Switch x:Name="ShowPriceSwitch" Toggled="OnShowPriceToggled" /> -->
-            <Label Text="Дополнительно отображать копчёную и вяленую продукцию так же и в упаковках (УП.)" FontSize="18" />
-            <Switch x:Name="ShowPackagedProductsSwitch" Toggled="OnShowPackagedProductsToggled" />
-            <Label Text="Скрыть цветовые подсказки в списке продукции (пример: пресервы)" FontSize="18" />
-            <Switch x:Name="IgnoreColorsSwitch" IsToggled="{Binding IgnoreColorsSetting}" Toggled="OnIgnoreColorsToggled" />
-        </StackLayout>
-        <StackLayout VerticalOptions="EndAndExpand" Margin="0,20,0,0">
-            <Button Text="Что нового?" 
-                    Clicked="OnWhatsNewClicked" 
-                    FontSize="14" 
-                    HorizontalOptions="Center" 
-                    BackgroundColor="Transparent" 
-                    TextColor="Blue" />
-            <Button Text="Сообщить об ошибке или предложить улучшение"
-                   Clicked="OnReportIssueClicked"
-                   FontSize="14"
+    <ScrollView>
+        <StackLayout Padding="20">
+            <Label Text="Настройки приложения" 
+                   FontSize="24" 
                    HorizontalOptions="Center"
-                   BackgroundColor="Transparent"
-                   TextColor="Blue"
-                   LineBreakMode="WordWrap" />
-            <Label x:Name="VersionLabel" 
-                   Text="Версия программы: r2.8.2 от 19.03.2025" 
-                   FontSize="14" 
-                   HorizontalOptions="Center" />
+                   Margin="0,20,0,30"/>
+
+            <!-- Settings switches -->
+            <Frame BorderColor="#e0e0e0" Margin="0,5">
+                <Grid ColumnDefinitions="*, Auto">
+                    <Label Text="Автоматический возврат" 
+                           VerticalOptions="Center"
+                           Grid.Column="0" />
+                    <Switch x:Name="AutoReturnSwitch" 
+                            Grid.Column="1" />
+                </Grid>
+            </Frame>
+
+            <Frame BorderColor="#e0e0e0" Margin="0,5">
+                <Grid ColumnDefinitions="*, Auto">
+                    <Label Text="Игнорировать цвета" 
+                           VerticalOptions="Center"
+                           Grid.Column="0" />
+                    <Switch x:Name="IgnoreColorsSwitch" 
+                            Grid.Column="1" />
+                </Grid>
+            </Frame>
+
+            <Frame BorderColor="#e0e0e0" Margin="0,5">
+                <Grid ColumnDefinitions="*, Auto">
+                    <Label Text="Показывать упакованные продукты" 
+                           VerticalOptions="Center"
+                           Grid.Column="0" />
+                    <Switch x:Name="ShowPackagedProductsSwitch" 
+                            Grid.Column="1" />
+                </Grid>
+            </Frame>
+
+            <!-- Buttons -->
+            <Button Text="Что нового?" 
+                    Clicked="OnWhatsNewClicked"
+                    BackgroundColor="#0078D7"
+                    TextColor="White"
+                    Margin="0,20,0,5" />
+
+            <Button Text="Сообщить об ошибке" 
+                    Clicked="OnReportIssueClicked"
+                    BackgroundColor="#0078D7"
+                    TextColor="White"
+                    Margin="0,5" />
+
+            <!-- Product Editor button -->
+            <Button Text="Редактор продукции" 
+                    Clicked="OnProductEditorClicked"
+                    BackgroundColor="#107C10"
+                    TextColor="White"
+                    Margin="0,20,0,5" />
         </StackLayout>
-    </StackLayout>
+    </ScrollView>
 </ContentPage>

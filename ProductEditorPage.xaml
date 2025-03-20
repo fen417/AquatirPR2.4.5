@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:model="clr-namespace:Aquatir.Model"
+             x:Class="Aquatir.Model.ProductEditorPage"
+             Title="Редактор продукции">
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header -->
+        <Label Text="Редактор продукции" 
+               FontSize="24" 
+               HorizontalOptions="Center"
+               Margin="0,20,0,10"
+               Grid.Row="0"/>
+
+        <!-- Loading indicator -->
+        <ActivityIndicator x:Name="LoadingIndicator" 
+                          IsVisible="True"
+                          IsRunning="True"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center"
+                          Grid.Row="1" />
+
+        <!-- Products list -->
+        <ScrollView Grid.Row="1">
+            <CollectionView x:Name="GroupsCollectionView"
+                           IsVisible="True">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <StackLayout Spacing="10" Padding="10">
+                            <!-- Group header -->
+                            <Frame BackgroundColor="#f0f0f0" Padding="10" Margin="0,0,0,5">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackLayout Grid.Column="0">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <!-- Expanding indicator with tap gesture -->
+                                            <Label Text="{Binding IsExpanded, Converter={StaticResource BoolToArrowConverter}, ConverterParameter='▼|►'}" 
+                                                   FontSize="16"
+                                                   VerticalOptions="Center"
+                                                   Grid.Column="0">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnGroupTapped" />
+                                                </Label.GestureRecognizers>
+                                            </Label>
+
+                                            <!-- Group name with tap gesture -->
+                                            <Label Text="{Binding Name}" 
+                                                   FontAttributes="Bold" 
+                                                   FontSize="18"
+                                                   Grid.Column="1">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnGroupTapped" />
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                        </Grid>
+
+                                        <!-- Loading indicator for group -->
+                                        <ActivityIndicator IsVisible="{Binding IsLoading}"
+                                                         IsRunning="{Binding IsLoading}"
+                                                         HeightRequest="20"
+                                                         WidthRequest="20"
+                                                         HorizontalOptions="Start" />
+                                    </StackLayout>
+
+                                    <Button Text="Добавить продукт" 
+                                            Clicked="OnAddProductClicked"
+                                            BackgroundColor="#0078D7"
+                                            TextColor="White"
+                                            HorizontalOptions="End"
+                                            Grid.Column="1" />
+                                </Grid>
+                            </Frame>
+
+                            <CollectionView ItemsSource="{Binding Products}"
+                IsVisible="{Binding IsExpanded}">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Frame Margin="5,2" Padding="10" BorderColor="#e0e0e0">
+                                            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
+                                                <!-- Product Name -->
+                                                <Label Text="{Binding Name}" 
+                           FontSize="16" 
+                           Grid.Row="0"
+                           Grid.Column="0" />
+
+                                                <!-- Tags Row -->
+                                                <FlexLayout Grid.Row="1" 
+                               Grid.Column="0"
+                               Direction="Row"
+                               JustifyContent="Start" 
+                               AlignItems="Center">
+                                                    <Label Text="Заканчивается" 
+                               TextColor="Orange"
+                               FontSize="12"
+                               Margin="0,0,5,0"
+                               Padding="5,2"
+                               BackgroundColor="#fff3e0"
+                               IsVisible="{Binding IsEnd}" />
+
+                                                    <Label Text="Новинка" 
+                               TextColor="Red"
+                               FontSize="12"
+                               Margin="0,0,5,0"
+                               Padding="5,2"
+                               BackgroundColor="#ffebee"
+                               IsVisible="{Binding IsNew}" />
+
+                                                    <Label Text="Снова в продаже" 
+                               TextColor="Green"
+                               FontSize="12"
+                               Padding="5,2"
+                               BackgroundColor="#e8f5e9"
+                               IsVisible="{Binding IsRes}" />
+                                                </FlexLayout>
+
+                                                <!-- Action Buttons -->
+                                                <Button Text="Ред." 
+                            Clicked="OnEditProductClicked"
+                            BackgroundColor="#0078D7"
+                            TextColor="White"
+                            HorizontalOptions="End"
+                            Grid.RowSpan="2"
+                            Grid.Column="1"
+                            Margin="0,0,5,0" />
+
+                                                <Button Text="Удалить" 
+                            Clicked="OnDeleteProductClicked"
+                            BackgroundColor="#E81123"
+                            TextColor="White"
+                            HorizontalOptions="End"
+                            Grid.RowSpan="2"
+                            Grid.Column="2" />
+                                            </Grid>
+                                        </Frame>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </StackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </ScrollView>
+
+        <!-- Save button -->
+        <Button Text="Сохранить изменения" 
+                Grid.Row="2"
+                Clicked="OnSaveChangesClicked"
+                BackgroundColor="#107C10"
+                TextColor="White"
+                Margin="20" />
+    </Grid>
+
+    <!-- Converters -->
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <model:BoolToStringConverter x:Key="BoolToArrowConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+</ContentPage>

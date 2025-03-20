@@ -1,6 +1,7 @@
 using Microsoft.Maui.Storage;
 using System.Net.Mail;
 using System.Net;
+using Aquatir.Model;
 
 namespace Aquatir
 {
@@ -113,7 +114,7 @@ namespace Aquatir
                 message.From = new MailAddress("rep.1958@mail.ru", "Aquatir App");
                 message.To.Add(new MailAddress("rep.1958@mail.ru", "Поддержка Aquatir"));
                 message.Subject = "Обратная связь по приложению Aquatir";
-                message.Body = $"Обратная связь от пользователя приложения:\n\n{feedbackText}\n\n2.8.2";
+                message.Body = $"Обратная связь от пользователя приложения:\n\n{feedbackText}\n\n3.0.0";
 
                 using (var client = new SmtpClient("smtp.mail.ru", 587)) // Изменен порт на 587
                 {
@@ -140,6 +141,32 @@ namespace Aquatir
             {
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                     await DisplayAlert("Ошибка", $"Произошла ошибка: {ex.Message}", "OK"));
+            }
+        }
+
+        // Добавлен метод для открытия страницы редактора продукции с проверкой пароля
+        private async void OnProductEditorClicked(object sender, EventArgs e)
+        {
+            // Запрашиваем пароль
+            string password = await DisplayPromptAsync(
+                "Требуется авторизация",
+                "Введите пароль для доступа к редактору продукции:",
+                "Войти",
+                "Отмена",
+                placeholder: "Введите пароль",
+                maxLength: 20,
+                keyboard: Keyboard.Numeric);
+
+            // Проверяем пароль
+            if (password == "160400")
+            {
+                // Открываем страницу редактора продукции
+                await Navigation.PushAsync(new ProductEditorPage());
+            }
+            else if (!string.IsNullOrEmpty(password))
+            {
+                // Показываем сообщение об ошибке, если пароль неверный
+                await DisplayAlert("Ошибка", "Неверный пароль. Доступ запрещен.", "OK");
             }
         }
     }
