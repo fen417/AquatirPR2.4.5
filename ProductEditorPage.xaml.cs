@@ -110,6 +110,11 @@ public partial class ProductEditorPage : ContentPage
         {
             await LoadProductsForGroupAsync(group);
         }
+
+        // Force UI update
+        var index = productGroups.IndexOf(group);
+        productGroups.RemoveAt(index);
+        productGroups.Insert(index, group);
     }
 
     private async Task LoadProductsForGroupAsync(ProductGroup group)
@@ -321,17 +326,22 @@ public partial class ProductEditorPage : ContentPage
                 IsRes = resCheckBox.IsChecked
             };
 
+            // Sort products alphabetically
             group.Products.Add(newProduct);
+            group.Products = new ObservableCollection<ProductItem>(
+                group.Products.OrderBy(p => p.Name)
+            );
 
             // Ensure group is expanded to show the new product
             if (!group.IsExpanded)
             {
                 group.IsExpanded = true;
-                // Force UI update
-                var index = productGroups.IndexOf(group);
-                productGroups.RemoveAt(index);
-                productGroups.Insert(index, group);
             }
+
+            // Force UI update
+            var index = productGroups.IndexOf(group);
+            productGroups.RemoveAt(index);
+            productGroups.Insert(index, group);
 
             await Navigation.PopModalAsync();
         };

@@ -239,7 +239,7 @@
                     TextColor="White"
                     CornerRadius="10"/>
 
-            <Label Text="Завершенные заказы:" 
+            <Label Text="Завершённые заказы:" 
                    FontAttributes="Italic"
                    FontSize="20"
                    TextColor="#2C3E50"
