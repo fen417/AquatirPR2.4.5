@@ -5,16 +5,13 @@
              Title="Настройки">
     <ScrollView>
         <StackLayout Padding="20">
-            <Label Text="Настройки приложения" 
-                   FontSize="24" 
-                   HorizontalOptions="Center"
-                   Margin="0,20,0,30"/>
 
             <!-- Settings switches -->
             <Frame BorderColor="#e0e0e0" Margin="0,5">
                 <Grid ColumnDefinitions="*, Auto">
-                    <Label Text="Автоматический возврат" 
+                    <Label Text="Автоматический возврат в главное меню после выбора товара" 
                            VerticalOptions="Center"
+                           FontSize="16"
                            Grid.Column="0" />
                     <Switch x:Name="AutoReturnSwitch" 
                             Grid.Column="1" />
@@ -23,8 +20,9 @@
 
             <Frame BorderColor="#e0e0e0" Margin="0,5">
                 <Grid ColumnDefinitions="*, Auto">
-                    <Label Text="Игнорировать цвета" 
+                    <Label Text="Отключить цветовые подсказки" 
                            VerticalOptions="Center"
+                           FontSize="16"
                            Grid.Column="0" />
                     <Switch x:Name="IgnoreColorsSwitch" 
                             Grid.Column="1" />
@@ -33,33 +31,47 @@
 
             <Frame BorderColor="#e0e0e0" Margin="0,5">
                 <Grid ColumnDefinitions="*, Auto">
-                    <Label Text="Показывать упакованные продукты" 
+                    <Label Text="Отображать продукцию в упаковках (УП.)"                              
                            VerticalOptions="Center"
+                           FontSize="16"
                            Grid.Column="0" />
                     <Switch x:Name="ShowPackagedProductsSwitch" 
                             Grid.Column="1" />
                 </Grid>
             </Frame>
-
-            <!-- Buttons -->
-            <Button Text="Что нового?" 
-                    Clicked="OnWhatsNewClicked"
-                    BackgroundColor="#0078D7"
-                    TextColor="White"
-                    Margin="0,20,0,5" />
-
-            <Button Text="Сообщить об ошибке" 
-                    Clicked="OnReportIssueClicked"
-                    BackgroundColor="#0078D7"
-                    TextColor="White"
-                    Margin="0,5" />
-
-            <!-- Product Editor button -->
-            <Button Text="Редактор продукции" 
+            <StackLayout VerticalOptions="EndAndExpand" Margin="0,20,0,0">
+                <Button Text="Редактор продукции" 
                     Clicked="OnProductEditorClicked"
                     BackgroundColor="#107C10"
                     TextColor="White"
+                    FontSize="18"
+                    FontAttributes="Bold" 
+                    CornerRadius="10"
                     Margin="0,20,0,5" />
+
+
+                <Button Text="Что нового?" 
+                    Clicked="OnWhatsNewClicked"
+                    FontAttributes="Bold" 
+                    BackgroundColor="#0078D7"
+                    FontSize="18"
+                    CornerRadius="10"
+                    TextColor="White"
+                    Margin="0,20,0,5" />
+
+                <Button Text="Сообщить об ошибке" 
+                    Clicked="OnReportIssueClicked"
+                    FontAttributes="Bold" 
+                    FontSize="18"
+                    CornerRadius="10"
+                    BackgroundColor="#0078D7"
+                    TextColor="White"
+                    Margin="0,5" />
+                <Label x:Name="VersionLabel" 
+                   Text="Версия программы: r3.0.0 от 25.03.2025" 
+                   FontSize="14" 
+                   HorizontalOptions="Center" />
+            </StackLayout>
         </StackLayout>
     </ScrollView>
 </ContentPage>

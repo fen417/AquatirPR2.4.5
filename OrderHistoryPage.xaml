@@ -2,8 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Aquatir.OrderHistoryPage"
-             Title="Моя история заказов">
-
+             Title="Моя история заказов"
+             BackgroundColor="#F4F4F4">
     <ContentPage.ToolbarItems>
         <!-- Кнопка для перезагрузки страницы -->
         <ToolbarItem Text="Обновить"
@@ -19,7 +19,9 @@
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <TextCell Text="{Binding CustomerName}" 
-                              Detail="{Binding FormattedOrderDetails}" />
+                              Detail="{Binding FormattedOrderDetails}" 
+                              TextColor="#2C3E50"
+                              DetailColor="#7F8C8D"/>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
@@ -29,6 +31,9 @@
                 VerticalOptions="End"
                 Clicked="OnClearOrderHistoryClicked"
                 Margin="10,10,10,10"
+                BackgroundColor="#E74C3C"
+                TextColor="White"
+                CornerRadius="10"
                 FontAttributes="Bold" 
                 FontSize="18"/>
     </StackLayout>

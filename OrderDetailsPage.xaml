@@ -1,34 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Aquatir.OrderDetailsPage"
-             Title="Детали заказа">
+             Title="Детали заказа"
+             BackgroundColor="#F4F4F4">
+    <StackLayout Padding="10" VerticalOptions="FillAndExpand">
+        <Label Text="{Binding CustomerName}" 
+               FontSize="24" 
+               HorizontalOptions="Center" 
+               TextColor="#2C3E50" 
+               Margin="10,10,10,5" />
 
-    <StackLayout Padding="10">
-        <Label Text="{Binding CustomerName}" FontSize="24" HorizontalOptions="Center" Margin="10,0,0,0" />
-        <Label Text="{Binding OrderDate, StringFormat='На какую дату сделан заказ: {0:dd.MM.yyyy}'}" Margin="10,0,0,0" />
+        <Label Text="{Binding OrderDate, StringFormat='На какую дату сделан заказ: {0:dd.MM.yyyy}'}" 
+               TextColor="#7F8C8D" 
+               HorizontalOptions="Center" 
+               Margin="10,0,10,10" />
 
-        <ListView ItemsSource="{Binding Products}" Margin="10,10,0,0">
+        <ListView ItemsSource="{Binding Products}" 
+                  Margin="10,10,10,10" 
+                  SeparatorColor="#ECF0F1">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <TextCell Text="{Binding DisplayName}" Detail="{Binding DisplayQuantity}" />
+                    <TextCell Text="{Binding DisplayName}" 
+                              Detail="{Binding DisplayQuantity}" 
+                              TextColor="#2C3E50"
+                              DetailColor="#7F8C8D"/>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
-        <Label Text="{Binding Comment, StringFormat='Комментарий: {0}'}" FontSize="18" Margin="20,0,0,0" />
 
-        <!-- Отображаем общую сумму 
-        <Label Text="{Binding FormattedTotalAmount}" FontSize="18" Margin="10,0,0,0" /> -->
+        <Label Text="{Binding Comment, StringFormat='Комментарий: {0}'}" 
+               FontSize="18" 
+               TextColor="#2C3E50"
+               Margin="20,0,20,10" />
 
-        <!-- Кнопка для восстановления заказа -->
         <Button Text="Восстановить для редактирования"
                 Clicked="OnRestoreOrderClicked"
                 VerticalOptions="Start"
+                BackgroundColor="#3498DB"
+                TextColor="White"
+                CornerRadius="10"
                 Padding="10" 
                 Margin="10,10,10,10" 
                 FontAttributes="Bold" 
                 FontSize="18"/>
 
-        <Button Text="Назад" Command="{Binding GoBackCommand}"  
+        <Button Text="Назад" 
+                Command="{Binding GoBackCommand}"
+                BackgroundColor="#E74C3C"
+                TextColor="White"
+                CornerRadius="10"
                 Margin="10,10,10,10"
                 FontAttributes="Bold" 
                 FontSize="18" />
