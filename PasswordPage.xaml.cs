@@ -25,7 +25,7 @@ namespace Aquatir
 
             if (string.IsNullOrWhiteSpace(selectedCity) || string.IsNullOrWhiteSpace(shopName) || string.IsNullOrWhiteSpace(enteredCode))
             {
-                await DisplayAlert("Ошибка", "Пожалуйста, заполните все поля.", "OK");
+                await DisplayAlert("ГЋГёГЁГЎГЄГ ", "ГЏГ®Г¦Г Г«ГіГ©Г±ГІГ , Г§Г ГЇГ®Г«Г­ГЁГІГҐ ГўГ±ГҐ ГЇГ®Г«Гї.", "OK");
                 return;
             }
 
@@ -36,11 +36,11 @@ namespace Aquatir
                 Preferences.Set("UserShopName", shopName);
                 Preferences.Set("IsAuthorized", true);
                 NavigateToMainPage();
-                StartBackgroundProductLoading(); // Запуск фоновой загрузки
+                StartBackgroundProductLoading(); // Г‡Г ГЇГіГ±ГЄ ГґГ®Г­Г®ГўГ®Г© Г§Г ГЈГ°ГіГ§ГЄГЁ
             }
             else
             {
-                await DisplayAlert("Ошибка", "Неверный код доступа.", "OK");
+                await DisplayAlert("ГЋГёГЁГЎГЄГ ", "ГЌГҐГўГҐГ°Г­Г»Г© ГЄГ®Г¤ Г¤Г®Г±ГІГіГЇГ .", "OK");
             }
         }
 
@@ -50,7 +50,7 @@ namespace Aquatir
 
             if (string.IsNullOrWhiteSpace(enteredManagerCode))
             {
-                await DisplayAlert("Ошибка", "Введите код менеджера.", "OK");
+                await DisplayAlert("ГЋГёГЁГЎГЄГ ", "Г‚ГўГҐГ¤ГЁГІГҐ ГЄГ®Г¤ Г¬ГҐГ­ГҐГ¤Г¦ГҐГ°Г .", "OK");
                 return;
             }
 
@@ -59,52 +59,42 @@ namespace Aquatir
                 Preferences.Set("AuthorizationType", "Manager");
                 Preferences.Set("IsAuthorized", true);
                 NavigateToMainPage();
-                StartBackgroundProductLoading(); // Запуск фоновой загрузки
+                StartBackgroundProductLoading(); // Г‡Г ГЇГіГ±ГЄ ГґГ®Г­Г®ГўГ®Г© Г§Г ГЈГ°ГіГ§ГЄГЁ
             }
             else
             {
-                await DisplayAlert("Ошибка", "Неверный код доступа менеджера.", "OK");
+                await DisplayAlert("ГЋГёГЁГЎГЄГ ", "ГЌГҐГўГҐГ°Г­Г»Г© ГЄГ®Г¤ Г¤Г®Г±ГІГіГЇГ  Г¬ГҐГ­ГҐГ¤Г¦ГҐГ°Г .", "OK");
             }
         }
 
-        private void NavigateToMainPage()
-        {
-            Console.WriteLine("[PasswordPage] Переход на главную страницу...");
-            try
-            {
-                if (DeviceInfo.Platform == DevicePlatform.Android)
-                {
-                    Application.Current.MainPage = new AppShell();
-                }
-                else if (DeviceInfo.Platform == DevicePlatform.WinUI)
-                {
-                    Application.Current.MainPage = new MainPage();
-                }
-                else
-                {
-                    Application.Current.MainPage = new MainPage();
-                }
-                Console.WriteLine("[PasswordPage] Переход на главную страницу завершен.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[PasswordPage] Ошибка при переходе на главную страницу: {ex.Message}");
-            }
-        }
-
+private void NavigateToMainPage()
+{
+    Console.WriteLine("[PasswordPage] РџРµСЂРµС…РѕРґ РЅР° РіР»Р°РІРЅСѓСЋ СЃС‚СЂР°РЅРёС†Сѓ...");
+    try
+    {
+        // РЈРЅРёРІРµСЂСЃР°Р»СЊРЅС‹Р№ РїРѕРґС…РѕРґ РґР»СЏ РІСЃРµС… РїР»Р°С‚С„РѕСЂРј
+        Application.Current.MainPage = new AppShell();
+        
+        Console.WriteLine("[PasswordPage] РџРµСЂРµС…РѕРґ РЅР° РіР»Р°РІРЅСѓСЋ СЃС‚СЂР°РЅРёС†Сѓ РІС‹РїРѕР»РЅРµРЅ.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[PasswordPage] РћС€РёР±РєР° РїСЂРё РїРµСЂРµС…РѕРґРµ РЅР° РіР»Р°РІРЅСѓСЋ СЃС‚СЂР°РЅРёС†Сѓ: {ex.Message}");
+    }
+}
         private void StartBackgroundProductLoading()
         {
-            // Запуск фоновой задачи для загрузки данных
+            // Г‡Г ГЇГіГ±ГЄ ГґГ®Г­Г®ГўГ®Г© Г§Г Г¤Г Г·ГЁ Г¤Г«Гї Г§Г ГЈГ°ГіГ§ГЄГЁ Г¤Г Г­Г­Г»Гµ
             Task.Run(async () =>
             {
                 try
                 {
-                    Console.WriteLine("Загрузка данных о продукции в фоновом режиме...");
+                    Console.WriteLine("Г‡Г ГЈГ°ГіГ§ГЄГ  Г¤Г Г­Г­Г»Гµ Г® ГЇГ°Г®Г¤ГіГЄГ¶ГЁГЁ Гў ГґГ®Г­Г®ГўГ®Г¬ Г°ГҐГ¦ГЁГ¬ГҐ...");
                     await LoadAllProductsFromUrl();
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Ошибка при загрузке данных: {ex.Message}");
+                    Console.WriteLine($"ГЋГёГЁГЎГЄГ  ГЇГ°ГЁ Г§Г ГЈГ°ГіГ§ГЄГҐ Г¤Г Г­Г­Г»Гµ: {ex.Message}");
                 }
             });
         }
@@ -114,7 +104,7 @@ namespace Aquatir
             string fileUrl = await GetFileDownloadLinkFromYandex();
             if (string.IsNullOrEmpty(fileUrl))
             {
-                Console.WriteLine("Не удалось получить ссылку для скачивания.");
+                Console.WriteLine("ГЌГҐ ГіГ¤Г Г«Г®Г±Гј ГЇГ®Г«ГіГ·ГЁГІГј Г±Г±Г»Г«ГЄГі Г¤Г«Гї Г±ГЄГ Г·ГЁГўГ Г­ГЁГї.");
                 return;
             }
 
@@ -130,31 +120,31 @@ namespace Aquatir
                     }
 
                     var content = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine("Данные успешно загружены с сервера.");
+                    Console.WriteLine("Г„Г Г­Г­Г»ГҐ ГіГ±ГЇГҐГёГ­Г® Г§Г ГЈГ°ГіГ¦ГҐГ­Г» Г± Г±ГҐГ°ГўГҐГ°Г .");
                     var productGroups = JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(content);
                     if (productGroups != null)
                     {
                         var databaseService = new DatabaseService();
                         await databaseService.SaveProductGroupsAsync(productGroups);
 
-                        Console.WriteLine("Данные успешно сохранены в базу данных.");
+                        Console.WriteLine("Г„Г Г­Г­Г»ГҐ ГіГ±ГЇГҐГёГ­Г® Г±Г®ГµГ°Г Г­ГҐГ­Г» Гў ГЎГ Г§Гі Г¤Г Г­Г­Г»Гµ.");
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Ошибка загрузки: " + response.StatusCode);
+                    Console.WriteLine("ГЋГёГЁГЎГЄГ  Г§Г ГЈГ°ГіГ§ГЄГЁ: " + response.StatusCode);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка загрузки: {ex.Message}");
+                Console.WriteLine($"ГЋГёГЁГЎГЄГ  Г§Г ГЈГ°ГіГ§ГЄГЁ: {ex.Message}");
             }
         }
 
         private async Task<string> GetFileDownloadLinkFromYandex()
         {
-            string yandexFilePath = "/productsCOLOR.json";  // Путь к файлу на Яндекс.Диске
-            string token = "y0_AgAAAAB4zZe6AAzBewAAAAEYCy0wAAABOYgsBbpL6pQDgfd6pphTlGUu3Q";  // OAuth токен
+            string yandexFilePath = "/productsCOLOR.json";  // ГЏГіГІГј ГЄ ГґГ Г©Г«Гі Г­Г  ГџГ­Г¤ГҐГЄГ±.Г„ГЁГ±ГЄГҐ
+            string token = "y0_AgAAAAB4zZe6AAzBewAAAAEYCy0wAAABOYgsBbpL6pQDgfd6pphTlGUu3Q";  // OAuth ГІГ®ГЄГҐГ­
 
             client.DefaultRequestHeaders.Clear();
             client.DefaultRequestHeaders.Add("Authorization", $"OAuth {token}");
@@ -168,7 +158,7 @@ namespace Aquatir
             }
             else
             {
-                Console.WriteLine("Ошибка получения ссылки для скачивания: " + response.StatusCode);
+                Console.WriteLine("ГЋГёГЁГЎГЄГ  ГЇГ®Г«ГіГ·ГҐГ­ГЁГї Г±Г±Г»Г«ГЄГЁ Г¤Г«Гї Г±ГЄГ Г·ГЁГўГ Г­ГЁГї: " + response.StatusCode);
                 return null;
             }
         }
