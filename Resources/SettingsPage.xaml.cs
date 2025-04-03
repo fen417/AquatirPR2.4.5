@@ -14,18 +14,23 @@ namespace Aquatir
             //  ShowPriceSwitch.IsToggled = Preferences.Get("ShowPriceEnabled", false);
             ShowPackagedProductsSwitch.IsToggled = Preferences.Get("ShowPackagedProducts", true); // По умолчанию включено
             IgnoreColorsSwitch.IsToggled = Preferences.Get("IgnoreColors", false);
+            ShowProductImagesSwitch.IsToggled = Preferences.Get("ShowProductImages", false); // По умолчанию выключено
             // Подписка на события переключателей
             AutoReturnSwitch.Toggled += OnAutoReturnToggled;
             IgnoreColorsSwitch.Toggled += OnIgnoreColorsToggled;
             //  ShowPriceSwitch.Toggled += OnShowPriceToggled;
             ShowPackagedProductsSwitch.Toggled += OnShowPackagedProductsToggled;
+            ShowProductImagesSwitch.Toggled += OnShowProductImagesToggled;
         }
 
         private void OnAutoReturnToggled(object sender, ToggledEventArgs e)
         {
             Preferences.Set("AutoReturnEnabled", e.Value);
         }
-
+        private void OnShowProductImagesToggled(object sender, ToggledEventArgs e)
+        {
+            Preferences.Set("ShowProductImages", e.Value);
+        }
         private void OnIgnoreColorsToggled(object sender, ToggledEventArgs e)
         {
             Preferences.Set("IgnoreColors", e.Value);
@@ -49,6 +54,9 @@ namespace Aquatir
         private async void OnWhatsNewClicked(object sender, EventArgs e)
         {
             string patchNotes = @"
+Что нового в версии r3.1.0:
+- Добавлена возможность включить в настройках отображение упаковки продукции
+
 Что нового в версии r3.0.0:
 - Добавлена редактор списка продукции (для менеджеров)
 - Обновлён интерфейс главной страницы, страниц истории и деталей заказа, страницы настроек
@@ -118,7 +126,7 @@ namespace Aquatir
                 message.From = new MailAddress("rep.1958@mail.ru", "Aquatir App");
                 message.To.Add(new MailAddress("rep.1958@mail.ru", "Поддержка Aquatir"));
                 message.Subject = "Обратная связь по приложению Aquatir";
-                message.Body = $"Обратная связь от пользователя приложения:\n\n{feedbackText}\n\n3.0.0";
+                message.Body = $"Обратная связь от пользователя приложения:\n\n{feedbackText}\n\n3.1.0";
 
                 using (var client = new SmtpClient("smtp.mail.ru", 587)) // Изменен порт на 587
                 {

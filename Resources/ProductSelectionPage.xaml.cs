@@ -32,7 +32,7 @@ namespace Aquatir
                 ProductCollectionView.RemainingItemsThreshold = 5;
                 ProductCollectionView.RemainingItemsThresholdReached += OnRemainingItemsThresholdReached;
             }
-            
+
             LoadProducts();
         }
 
@@ -192,7 +192,8 @@ namespace Aquatir
 
                 if (DeviceInfo.Platform == DevicePlatform.WinUI)
                 {
-                    var quantityPopup = new QuantityInputPopup();
+                    // Windows implementation remains the same
+                    var quantityPopup = new QuantityInputPopup(cleanProductName);
                     quantityPopup.QuantityConfirmed += async (sender, quantity) =>
                     {
                         _mainPage.AddProductToOrder(cleanProductName, quantity);
@@ -206,15 +207,132 @@ namespace Aquatir
                 }
                 else if (DeviceInfo.Platform == DevicePlatform.Android)
                 {
-                    string result = await DisplayPromptAsync("Укажите количество", $"Укажите количество для {cleanProductName}", "OK", "Отмена", keyboard: Keyboard.Numeric);
+                    // For Android - new improved implementation
+                    bool showProductImages = Preferences.Get("ShowProductImages", false);
+                    string imageUrl = showProductImages ? await ProductImageCache.GetImageUrlForProduct(cleanProductName) : null;
 
-                    if (!string.IsNullOrWhiteSpace(result))
+                    // Create a custom popup for Android
+                    var popupLayout = new VerticalStackLayout
                     {
-                        result = result.Replace(",", ".");
-                        if (decimal.TryParse(result, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal quantity) && quantity > 0)
+                        Spacing = 20,
+                        Padding = new Thickness(30),
+                        BackgroundColor = Colors.White
+                    };
+
+                    // Add product name
+                    var productNameLabel = new Label
+                    {
+                        Text = cleanProductName,
+                        HorizontalOptions = LayoutOptions.Center,
+                        FontSize = 18,
+                        TextColor = Colors.Black,
+                        FontAttributes = FontAttributes.Bold,
+                        Margin = new Thickness(0, 0, 0, 10)
+                    };
+                    popupLayout.Add(productNameLabel);
+
+                    // Add image if available
+                    if (!string.IsNullOrEmpty(imageUrl))
+                    {
+                        var image = new Image
+                        {
+                            HeightRequest = 200,
+                            WidthRequest = 200,
+                            Aspect = Aspect.AspectFit,
+                            HorizontalOptions = LayoutOptions.Center,
+                            BackgroundColor = Colors.Transparent
+                        };
+
+                        try
+                        {
+                            image.Source = ImageSource.FromUri(new Uri(imageUrl));
+                            popupLayout.Add(image);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error setting image source: {ex.Message}");
+                        }
+                    }
+
+                    // Quantity input
+                    var entry = new Entry
+                    {
+                        Placeholder = "Укажите количество",
+                        Keyboard = Keyboard.Numeric,
+                        HorizontalOptions = LayoutOptions.Fill,
+                        BackgroundColor = Colors.White,
+                        TextColor = Colors.Black,
+                        FontSize = 16,
+                        HeightRequest = 50,
+                        Margin = new Thickness(0, 10, 0, 10)
+                    };
+
+                    // Buttons layout
+                    var buttonsLayout = new HorizontalStackLayout
+                    {
+                        Spacing = 20,
+                        HorizontalOptions = LayoutOptions.Center
+                    };
+
+                    var confirmButton = new Button
+                    {
+                        Text = "OK",
+                        HorizontalOptions = LayoutOptions.FillAndExpand,
+                        BackgroundColor = Colors.Green, // MAUI primary color
+                        TextColor = Colors.White,
+                        FontSize = 16,
+                        HeightRequest = 50,
+                        WidthRequest = 120
+                    };
+
+                    var cancelButton = new Button
+                    {
+                        Text = "Отмена",
+                        HorizontalOptions = LayoutOptions.FillAndExpand,
+                        BackgroundColor = Colors.LightGray,
+                        TextColor = Colors.Black,
+                        FontSize = 16,
+                        HeightRequest = 50,
+                        WidthRequest = 120
+                    };
+
+                    buttonsLayout.Add(confirmButton);
+                    buttonsLayout.Add(cancelButton);
+
+                    popupLayout.Add(entry);
+                    popupLayout.Add(buttonsLayout);
+
+                    // Create the popup
+                    var popup = new Popup
+                    {
+                        Content = new Frame
+                        {
+                            Content = popupLayout,
+                            CornerRadius = 10,
+                            BackgroundColor = Colors.White,
+                            BorderColor = Colors.LightGray,
+                            Padding = new Thickness(0),
+                            HasShadow = true,
+                            WidthRequest = DeviceInfo.Idiom == DeviceIdiom.Phone ? 300 : 400,
+                            HorizontalOptions = LayoutOptions.Center,
+                            VerticalOptions = LayoutOptions.Center
+                        },
+                        Color = Color.FromArgb("#80000000") // Semi-transparent background
+                    };
+
+                    // Set up event handlers
+                    var tcs = new TaskCompletionSource<bool>();
+
+                    confirmButton.Clicked += async (s, args) =>
+                    {
+                        string inputText = entry.Text?.Replace(',', '.') ?? "";
+
+                        if (decimal.TryParse(inputText, System.Globalization.NumberStyles.Any,
+                            System.Globalization.CultureInfo.InvariantCulture, out decimal quantity) && quantity > 0)
                         {
                             _mainPage.AddProductToOrder(cleanProductName, quantity);
-                            await DisplayAlert("Успех", $"{cleanProductName} успешно добавлен(а) в заказ.", "OK");
+                            popup.Close();
+                            tcs.SetResult(true);
 
                             if (Preferences.Get("AutoReturnEnabled", false))
                             {
@@ -225,10 +343,20 @@ namespace Aquatir
                         {
                             await DisplayAlert("Ошибка", "Укажите корректное количество.", "OK");
                         }
-                    }
-                }
+                    };
 
-                ProductCollectionView.SelectedItem = null;
+                    cancelButton.Clicked += (s, args) =>
+                    {
+                        popup.Close();
+                        tcs.SetResult(false);
+                    };
+
+                    // Show the popup
+                    await Application.Current.MainPage.ShowPopupAsync(popup);
+                    await tcs.Task;
+
+                    ProductCollectionView.SelectedItem = null;
+                }
             }
         }
 
@@ -236,11 +364,26 @@ namespace Aquatir
         {
             public Entry QuantityEntry { get; private set; }
             public Button ConfirmButton { get; private set; }
+            public Image ProductImage { get; private set; }
+            private string _productName;
 
             public event EventHandler<decimal> QuantityConfirmed;
 
-            public QuantityInputPopup()
+            public QuantityInputPopup(string productName)
             {
+                _productName = productName;
+
+                // Product image (will be shown only if enabled in settings)
+                ProductImage = new Image
+                {
+                    HorizontalOptions = LayoutOptions.Center,
+                    VerticalOptions = LayoutOptions.Start,
+                    HeightRequest = 150,
+                    WidthRequest = 150,
+                    Aspect = Aspect.AspectFit,
+                    IsVisible = false // Will be set to true if image is loaded
+                };
+
                 QuantityEntry = new Entry
                 {
                     Keyboard = Keyboard.Numeric,
@@ -278,7 +421,7 @@ namespace Aquatir
                 {
                     Padding = new Thickness(20),
                     Spacing = 20,
-                    Children = { QuantityEntry, ConfirmButton }
+                    Children = { ProductImage, QuantityEntry, ConfirmButton }
                 };
 
                 var contentLayout = new Frame
@@ -286,8 +429,8 @@ namespace Aquatir
                     Padding = new Thickness(10),
                     CornerRadius = 10,
                     Content = stackLayout,
-                    HeightRequest = 200,
-                    WidthRequest = 300,
+                    HeightRequest = 300, // Increased height to accommodate image
+                    WidthRequest = 320, // Increased width slightly
                     HorizontalOptions = LayoutOptions.Center,
                     VerticalOptions = LayoutOptions.Center,
                     BackgroundColor = Microsoft.Maui.Graphics.Color.FromArgb("#2D2D30")
@@ -295,6 +438,36 @@ namespace Aquatir
 
                 Content = contentLayout;
                 this.Opened += OnPopupOpened;
+
+                // Load product image if feature is enabled
+                bool showProductImages = Preferences.Get("ShowProductImages", false);
+                if (showProductImages)
+                {
+                    LoadProductImage();
+                }
+            }
+
+            private async void LoadProductImage()
+            {
+                try
+                {
+                    string imageUrl = await ProductImageCache.GetImageUrlForProduct(_productName);
+                    Console.WriteLine($"QuantityInputPopup - Retrieved image URL: {imageUrl}");
+
+                    if (!string.IsNullOrEmpty(imageUrl))
+                    {
+                        ProductImage.Source = ImageSource.FromUri(new Uri(imageUrl));
+                    }
+                    else
+                    {
+                        ProductImage.IsVisible = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading product image: {ex.Message}");
+                    ProductImage.IsVisible = false;
+                }
             }
 
             private async void OnPopupOpened(object sender, EventArgs e)
@@ -305,7 +478,10 @@ namespace Aquatir
 
             private void OnConfirmButtonClicked(object sender, EventArgs e)
             {
-                if (decimal.TryParse(QuantityEntry.Text, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal quantity) && quantity > 0)
+                string inputText = QuantityEntry.Text?.Replace(',', '.') ?? "";
+
+                if (decimal.TryParse(inputText, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out decimal quantity) && quantity > 0)
                 {
                     QuantityConfirmed?.Invoke(this, quantity);
                     Close();

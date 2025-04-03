@@ -67,21 +67,28 @@ namespace Aquatir
             }
         }
 
-private void NavigateToMainPage()
-{
-    Console.WriteLine("[PasswordPage] Переход на главную страницу...");
-    try
-    {
-        // Универсальный подход для всех платформ
-        Application.Current.MainPage = new AppShell();
-        
-        Console.WriteLine("[PasswordPage] Переход на главную страницу выполнен.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"[PasswordPage] Ошибка при переходе на главную страницу: {ex.Message}");
-    }
-}
+        private void NavigateToMainPage()
+        {
+            Console.WriteLine("[PasswordPage] Переход на главную страницу...");
+            try
+            {
+                // Для Windows может потребоваться специальная обработка
+#if WINDOWS
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            Application.Current.MainPage = new AppShell();
+        });
+#else
+                Application.Current.MainPage = new AppShell();
+#endif
+
+                Console.WriteLine("[PasswordPage] Переход на главную страницу выполнен.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PasswordPage] Ошибка при переходе на главную страницу: {ex.Message}");
+            }
+        }
         private void StartBackgroundProductLoading()
         {
             // Çàïóñê ôîíîâîé çàäà÷è äëÿ çàãðóçêè äàííûõ

@@ -39,6 +39,18 @@
                             Grid.Column="1" />
                 </Grid>
             </Frame>
+            
+            <Frame BorderColor="#e0e0e0" Margin="0,5">
+                <Grid ColumnDefinitions="*, Auto">
+                    <Label Text="Показывать изображение продукта при выборе количества" 
+               VerticalOptions="Center"
+               FontSize="16"
+               Grid.Column="0" />
+                    <Switch x:Name="ShowProductImagesSwitch" 
+                Grid.Column="1" />
+                </Grid>
+            </Frame>
+
             <StackLayout VerticalOptions="EndAndExpand" Margin="0,20,0,0">
                 <Button Text="Редактор продукции" 
                     Clicked="OnProductEditorClicked"
@@ -68,7 +80,7 @@
                     TextColor="White"
                     Margin="0,5" />
                 <Label x:Name="VersionLabel" 
-                   Text="Версия программы: r3.0.0 от 25.03.2025" 
+                   Text="Версия программы: r3.1.0 от 03.04.2025" 
                    FontSize="14" 
                    HorizontalOptions="Center" />
             </StackLayout>

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- Целевые платформы -->
-    <TargetFrameworks>net9.0-android;</TargetFrameworks>
+	<TargetFrameworks>net9.0-android;net9.0-windows10.0.26100.0;</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <RootNamespace>Aquatir</RootNamespace>
     <UseMaui>true</UseMaui>
@@ -16,7 +16,9 @@
     <ApplicationVersion>1</ApplicationVersion>
     <!-- Поддержка платформ -->
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
-    <TargetPlatformVersion Condition="'$(TargetFramework)' == 'net9.0-windows'">10.0.22000.0</TargetPlatformVersion>
+    <TargetPlatformVersion Condition="'$(TargetFramework)' == 'net9.0-windows'">10.0.26100</TargetPlatformVersion>
+	<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+	<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
     <!-- Параметры сборки -->
     <PackageCertificateThumbprint>4A7FF75237F656A1E51DCC9AA9F9FC95B04C4940</PackageCertificateThumbprint>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
@@ -163,13 +165,13 @@
   </ItemGroup>
   <!-- Зависимости -->
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Maui" Version="11.1.0" />
+    <PackageReference Include="CommunityToolkit.Maui" Version="11.2.0" />
     <PackageReference Include="Dropbox.Api" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.2" />
-    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.40" />
-    <PackageReference Include="Microsoft.Maui.Essentials" Version="9.0.40" />
-    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.40" />
-    <PackageReference Include="MailKit" Version="4.10.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.50" />
+    <PackageReference Include="Microsoft.Maui.Essentials" Version="9.0.50" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.50" />
+    <PackageReference Include="MailKit" Version="4.11.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Plugin.LocalNotification" Version="11.1.4" />
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />

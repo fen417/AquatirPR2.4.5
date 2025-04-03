@@ -29,7 +29,14 @@ namespace Aquatir
                 Console.WriteLine($"[App] InnerException: {exception?.InnerException?.Message}");
                 Console.WriteLine($"[App] StackTrace: {exception?.StackTrace}");
             };
-            LoadProductsOnStartup();
+            try
+            {
+                LoadProductsOnStartup();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[App] Error in LoadProductsOnStartup: {ex.Message}");
+            }
         }
 
         private async void InitializeDatabaseAsync()
@@ -243,10 +250,23 @@ namespace Aquatir
     {
         private const string CacheKey = "CachedProducts";
         private const string LastModifiedKey = "LastModified";
+        public static Dictionary<string, List<ProductItem>> CachedProducts { get; set; }
+        public static DateTime LastModified { get; set; }
+        static ProductCache()
+        {
+            try
+            {
+                CachedProducts = LoadCache();
+                LastModified = LoadLastModified();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ProductCache] Error in static constructor: {ex.Message}");
+                CachedProducts = new Dictionary<string, List<ProductItem>>();
+                LastModified = DateTime.MinValue;
+            }
+        }
 
-        public static Dictionary<string, List<ProductItem>> CachedProducts { get; set; } = LoadCache();
-
-        public static DateTime LastModified { get; set; } = LoadLastModified();
 
         public static void SaveCache()
         {
@@ -257,45 +277,73 @@ namespace Aquatir
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка при сохранении кэша: {ex.Message}");
+                Console.WriteLine($"[ProductCache] Error saving cache: {ex.Message}");
             }
         }
 
         public static void SaveLastModified(DateTime lastModified)
         {
-            LastModified = lastModified;
-            Preferences.Set(LastModifiedKey, lastModified.ToString("O"));
+            try
+            {
+                LastModified = lastModified;
+                Preferences.Set(LastModifiedKey, lastModified.ToString("O"));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ProductCache] Error saving last modified: {ex.Message}");
+            }
         }
 
         private static Dictionary<string, List<ProductItem>> LoadCache()
         {
-            var json = Preferences.Get(CacheKey, string.Empty);
-            if (string.IsNullOrEmpty(json))
-                return new Dictionary<string, List<ProductItem>>();
-
             try
             {
+                var json = Preferences.Get(CacheKey, string.Empty);
+                if (string.IsNullOrEmpty(json))
+                    return new Dictionary<string, List<ProductItem>>();
+
                 return JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(json)
                        ?? new Dictionary<string, List<ProductItem>>();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка при загрузке кэша: {ex.Message}");
+                Console.WriteLine($"[ProductCache] Error loading cache: {ex.Message}");
                 return new Dictionary<string, List<ProductItem>>();
             }
         }
 
         private static DateTime LoadLastModified()
         {
-            var lastModifiedString = Preferences.Get(LastModifiedKey, string.Empty);
-            if (DateTime.TryParse(lastModifiedString, out DateTime lastModified))
-                return lastModified;
+            try
+            {
+                var lastModifiedString = Preferences.Get(LastModifiedKey, string.Empty);
+                if (DateTime.TryParse(lastModifiedString, out DateTime lastModified))
+                    return lastModified;
 
-            return DateTime.MinValue;
+                return DateTime.MinValue;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ProductCache] Error loading last modified: {ex.Message}");
+                return DateTime.MinValue;
+            }
         }
     }
     public static class AppState
-{
-    public static bool IsDatabaseLoaded { get; set; } = false;
-}
+    {
+        // Static constructor with error handling
+        static AppState()
+        {
+            try
+            {
+                IsDatabaseLoaded = false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AppState] Error in static constructor: {ex.Message}");
+            }
+        }
+
+        public static bool IsDatabaseLoaded { get; set; } = false;
+    }
 }
