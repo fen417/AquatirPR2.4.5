@@ -1,25 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Целевые платформы -->
-	<TargetFrameworks>net9.0-android;net9.0-windows10.0.26100.0;</TargetFrameworks>
+	<TargetFrameworks>net9.0-android;net9.0-windows10.0.19041.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <RootNamespace>Aquatir</RootNamespace>
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- Информация о приложении -->
     <ApplicationTitle>Aquatir</ApplicationTitle>
     <ApplicationId>com.companyname.aquatir</ApplicationId>
     <ApplicationIdGuid>6510f323-3691-4dc2-8bce-b75132b95de6</ApplicationIdGuid>
-    <!-- Версии приложения -->
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
-    <!-- Поддержка платформ -->
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
     <TargetPlatformVersion Condition="'$(TargetFramework)' == 'net9.0-windows'">10.0.26100</TargetPlatformVersion>
 	<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 	<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
-    <!-- Параметры сборки -->
     <PackageCertificateThumbprint>4A7FF75237F656A1E51DCC9AA9F9FC95B04C4940</PackageCertificateThumbprint>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
