@@ -26,6 +26,7 @@ namespace Aquatir
         {
             Console.WriteLine("[MainPage] Конструктор вызван.");
             InitializeComponent();
+            OrderDatePicker.Date = DateTime.Today;
             Console.WriteLine("[MainPage] Инициализация компонентов завершена.");
             Connectivity.Current.ConnectivityChanged += Current_ConnectivityChanged;
 
@@ -58,7 +59,7 @@ namespace Aquatir
                 var validShops = new List<string>
         {
             "ип - романова", "акватории григориополь", "акватир григориополь",
-            "галион", "акватир бендеры"
+            "галион", "акватир бендеры", "И/П Дарануца", "ИП Романова"
         };
 
                 OrderDatePicker.Date = validShops.Contains(userShopName.ToLower()) ? DateTime.Now.AddDays(1) : DateTime.Now;
@@ -433,6 +434,7 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             }
         }
 
+
         private void SendEmailForProductCategory(List<ProcessedOrder> processedOrders, IEnumerable<string> customerNames,
             string orderDateText, string additionalOrderText, string categoryTag, List<string> groupOrder)
         {
@@ -565,11 +567,8 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
        
         private void RefreshPage()
         {
-            // Обновляем данные на странице
             OrdersCollectionView.ItemsSource = null;
             OrdersCollectionView.ItemsSource = _orders;
-
-            // Обновляем другие элементы, если необходимо
             UpdatePreview();
             UpdateGroupButtonsState();
         }
@@ -580,8 +579,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             Console.WriteLine("[MainPage] Страница отображается.");
             var notificationManager = new NotificationManager();
             await notificationManager.CheckAndShowNotificationsAsync();
-
-            // Блокируем кнопки групп
             IsDataLoaded = false;
             UpdateGroupButtonsState();
 
@@ -616,7 +613,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 await Task.Run(LoadSeenProducts);
                 await CheckForNewProductsAsync();
                 RefreshPage();
-                RestoreSelectedDate();
                 RestoreCurrentOrder();
                 UpdateGroupButtonsState();
             }
@@ -633,19 +629,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             foreach (var button in GroupButtonsStackLayout.Children.OfType<Button>())
             {
                 button.IsEnabled = IsDataLoaded;
-            }
-        }
-
-        private void RestoreSelectedDate()
-        {
-            if (Preferences.ContainsKey("SelectedOrderDate"))
-            {
-                string savedDate = Preferences.Get("SelectedOrderDate", DateTime.Now.ToString("o"));
-                if (DateTime.TryParse(savedDate, null, DateTimeStyles.RoundtripKind, out DateTime restoredDate))
-                {
-                    OrderDatePicker.Date = restoredDate;
-                    Console.WriteLine($"[MainPage] Дата восстановлена: {restoredDate}");
-                }
             }
         }
 
@@ -925,7 +908,9 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
 
             orderHistoryService.SaveOrderHistory(orderHistory);
             Preferences.Remove("CurrentOrder");
+            var selectedDate = OrderDatePicker.Date;
             _currentOrder = new Order();
+            OrderDatePicker.Date = selectedDate;
             CommentEntry.Text = string.Empty;
             PreviewCollectionView.ItemsSource = null;
             CustomerPicker.SelectedIndex = -1;

@@ -43,7 +43,7 @@
                 Padding="10" 
                 Margin="10,10,10,10" 
                 FontAttributes="Bold" 
-                FontSize="18"/>
+                FontSize="16"/>
 
         <Button Text="Назад" 
                 Command="{Binding GoBackCommand}"
@@ -52,6 +52,6 @@
                 CornerRadius="10"
                 Margin="10,10,10,10"
                 FontAttributes="Bold" 
-                FontSize="18" />
+                FontSize="16" />
     </StackLayout>
 </ContentPage>

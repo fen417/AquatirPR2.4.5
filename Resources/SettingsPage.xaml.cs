@@ -54,6 +54,10 @@ namespace Aquatir
         private async void OnWhatsNewClicked(object sender, EventArgs e)
         {
             string patchNotes = @"
+Что нового в версии r3.2.1:
+- Исправлен некорректный сброс даты заказа
+- Исправления интерфейса
+
 Что нового в версии r3.2.0:
 - При выборе товара сразу активна строка с вводом количества товара
 - Исправление способа формирования письма при отправке заявки (программно)
@@ -160,7 +164,7 @@ namespace Aquatir
             }
         }
 
-        // Добавлен метод для открытия страницы редактора продукции с проверкой пароля
+
         private async void OnProductEditorClicked(object sender, EventArgs e)
         {
             // Запрашиваем пароль

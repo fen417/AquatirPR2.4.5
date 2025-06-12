@@ -162,7 +162,7 @@ namespace Aquatir
         public string DisplayOrderDate => OrderDate.ToString("dd.MM.yyyy");
 
         public DateTime CompletionDate { get; set; }
-        public string FormattedCompletionDate => $"Дата и время завершения заказа: {CompletionDate.ToString("dd.MM.yyyy HH:mm")}";
+        public string FormattedCompletionDate => $"Дата завершения заказа: {CompletionDate.ToString("dd.MM.yyyy HH:mm")}";
 
         public string CustomerName
         {
