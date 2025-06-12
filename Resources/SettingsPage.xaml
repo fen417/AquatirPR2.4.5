@@ -2,7 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Aquatir.SettingsPage"
-             Title="Настройки">
+             Title="Настройки"
+             BackgroundColor="White">
     <ScrollView>
         <StackLayout Padding="20">
 
@@ -12,6 +13,7 @@
                     <Label Text="Автоматический возврат в главное меню после выбора товара" 
                            VerticalOptions="Center"
                            FontSize="16"
+                           TextColor="#2C3E50"
                            Grid.Column="0" />
                     <Switch x:Name="AutoReturnSwitch" 
                             Grid.Column="1" />
@@ -22,6 +24,7 @@
                 <Grid ColumnDefinitions="*, Auto">
                     <Label Text="Отключить цветовые подсказки" 
                            VerticalOptions="Center"
+                           TextColor="#2C3E50"
                            FontSize="16"
                            Grid.Column="0" />
                     <Switch x:Name="IgnoreColorsSwitch" 
@@ -33,6 +36,7 @@
                 <Grid ColumnDefinitions="*, Auto">
                     <Label Text="Отображать продукцию в упаковках (УП.)"                              
                            VerticalOptions="Center"
+                           TextColor="#2C3E50"
                            FontSize="16"
                            Grid.Column="0" />
                     <Switch x:Name="ShowPackagedProductsSwitch" 
@@ -42,8 +46,9 @@
             
             <Frame BorderColor="#e0e0e0" Margin="0,5">
                 <Grid ColumnDefinitions="*, Auto">
-                    <Label Text="Показывать изображение продукта при выборе количества" 
+                    <Label Text="Показывать изображение продукта при выборе" 
                VerticalOptions="Center"
+                           TextColor="#2C3E50"
                FontSize="16"
                Grid.Column="0" />
                     <Switch x:Name="ShowProductImagesSwitch" 
@@ -80,7 +85,7 @@
                     TextColor="White"
                     Margin="0,5" />
                 <Label x:Name="VersionLabel" 
-                   Text="Версия программы: r3.1.0 от 03.04.2025" 
+                   Text="Версия программы: r3.2.0 от 30.05.2025" 
                    FontSize="14" 
                    HorizontalOptions="Center" />
             </StackLayout>

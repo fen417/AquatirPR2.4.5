@@ -71,8 +71,8 @@ namespace Aquatir
         { "Тирасполь", new List<string> {
             "Агора Бородино", "Агора Зелинского", "Агора Краснодонская", "Агора Юности", "Агора Чкалова",
             "БМК - 2", "БМК - 31", "Динисалл Каховская", "Динисалл Краснодонская", "Динисалл Палома",
-            "Динисалл Фортуна", "И/П Насиковский", "И/П Сырбул", "И/П Хаджи", "И/П Кобзарь",
-            "ООО Наполи (р-н Джорджия)", "Сигл Комета", "Сигл Ларионова", "У Семёныча", "Фагот",
+            "Динисалл Фортуна", "И/П Насиковский", "И/П Онищенко", "И/П Сырбул", "И/П Хаджи", "И/П Кобзарь",
+            "ООО Миатита", "ООО Наполи (р-н Джорджия)", "Сигл Комета", "Сигл Ларионова", "У Семёныча", "Фагот",
             "Эверест", "Эндис"
         }},
         { "Бендеры", new List<string> {
@@ -350,76 +350,192 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
     }
 }
         private void SendOrdersByEmail(List<Order> selectedOrders)
-{
-    var groupOrder = ProductCache.CachedProducts.Keys.ToList();
-    var ordersByDate = selectedOrders.GroupBy(o => o.OrderDate).ToList();
-    foreach (var orderGroup in ordersByDate)
-    {
-        var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("Aquatir", "rep.1958@mail.ru"));
-        message.To.Add(new MailboxAddress("Получатель", "fen559256@gmail.com"));
-        var customerNames = orderGroup.Select(o => o.CustomerName).Distinct();
-        string orderDateText = orderGroup.Key.ToString("dd.MM.yyyy");
-        bool hasAdditionalOrder = orderGroup.Any(o => o.IsAdditionalOrder);
-        string additionalOrderText = hasAdditionalOrder ? " (доп. заявка)" : "";
-        message.Subject = $"Заявка от {string.Join(", ", customerNames)}{additionalOrderText} на {orderDateText}";
-        
-        var bodyBuilder = new BodyBuilder();
-        foreach (var order in orderGroup)
         {
-            var directionText = !string.IsNullOrWhiteSpace(order.Direction) ? order.Direction : "Не указано";
-            var bodyText = $"<div><b><u><font size='5'>{order.CustomerName} ({directionText}).</font><font size='3'> Заявка на {orderDateText}</font></u></b></div>";
-            var sortedProducts = order.Products
-                .OrderBy(product => GetProductGroupIndex(RemoveColorTags(product.Name), groupOrder))
-                .ThenBy(product => RemoveColorTags(product.Name), StringComparer.OrdinalIgnoreCase)
-                .ThenBy(product => product.Name, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            // Разделение на основной список и горячее копчение
-            var hotSmokingProducts = sortedProducts
-                .Where(p => p.Name.Contains("г/к", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-            var regularProducts = sortedProducts.Except(hotSmokingProducts).ToList();
-            foreach (var product in regularProducts)
+            var groupOrder = ProductCache.CachedProducts.Keys.ToList();
+            var ordersByDate = selectedOrders.GroupBy(o => o.OrderDate).ToList();
+
+            foreach (var orderGroup in ordersByDate)
             {
-                bodyText += $"<div> <font size='3'>{product.DisplayName} - {product.DisplayQuantity}</font></div>";
+                var customerNames = orderGroup.Select(o => o.CustomerName).Distinct();
+                string orderDateText = orderGroup.Key.ToString("dd.MM.yyyy");
+                bool hasAdditionalOrder = orderGroup.Any(o => o.IsAdditionalOrder);
+                string additionalOrderText = hasAdditionalOrder ? " (доп. заявка)" : "";
+
+                // Разделяем продукты по категориям для каждого заказа
+                var processedOrders = new List<ProcessedOrder>();
+
+                foreach (var order in orderGroup)
+                {
+                    var regularProducts = new List<ProductItem>();
+                    var frozenProducts = new List<ProductItem>();
+                    var seafoodProducts = new List<ProductItem>();
+
+                    foreach (var product in order.Products)
+                    {
+                        string productNameLower = product.Name.ToLower();
+
+                        // Проверяем на мороженую продукцию
+                        if (productNameLower.Contains("морожен") ||
+                            productNameLower.Contains("ухи") ||
+                            productNameLower.Contains("уха") ||
+                            productNameLower.Contains("печень") ||
+                            productNameLower.Contains("спецразделка"))
+                        {
+                            frozenProducts.Add(product);
+                        }
+                        // Проверяем на морепродукты
+                        else if (productNameLower.Contains("креветка") ||
+                                 productNameLower.Contains("кальмар") ||
+                                 productNameLower.Contains("мясо мидий") ||
+                                 productNameLower.Contains("alfredo") ||
+                                 productNameLower.Contains("осьминог"))
+                        {
+                            seafoodProducts.Add(product);
+                        }
+                        else
+                        {
+                            regularProducts.Add(product);
+                        }
+                    }
+
+                    processedOrders.Add(new ProcessedOrder
+                    {
+                        OriginalOrder = order,
+                        RegularProducts = regularProducts,
+                        FrozenProducts = frozenProducts,
+                        SeafoodProducts = seafoodProducts
+                    });
+                }
+
+                // Отправляем основное письмо (если есть обычные продукты)
+                var ordersWithRegularProducts = processedOrders.Where(po => po.RegularProducts.Any()).ToList();
+                if (ordersWithRegularProducts.Any())
+                {
+                    var regularCustomerNames = ordersWithRegularProducts.Select(po => po.OriginalOrder.CustomerName).Distinct();
+                    SendEmailForProductCategory(ordersWithRegularProducts, regularCustomerNames, orderDateText, additionalOrderText, "", groupOrder);
+                }
+
+                // Отправляем письмо с мороженой продукцией
+                var ordersWithFrozenProducts = processedOrders.Where(po => po.FrozenProducts.Any()).ToList();
+                if (ordersWithFrozenProducts.Any())
+                {
+                    var frozenCustomerNames = ordersWithFrozenProducts.Select(po => po.OriginalOrder.CustomerName).Distinct();
+                    SendEmailForProductCategory(ordersWithFrozenProducts, frozenCustomerNames, orderDateText, additionalOrderText, " [МОРОЖЕННАЯ ПРОДУКЦИЯ]", groupOrder);
+                }
+
+                // Отправляем письмо с морепродуктами
+                var ordersWithSeafoodProducts = processedOrders.Where(po => po.SeafoodProducts.Any()).ToList();
+                if (ordersWithSeafoodProducts.Any())
+                {
+                    var seafoodCustomerNames = ordersWithSeafoodProducts.Select(po => po.OriginalOrder.CustomerName).Distinct();
+                    SendEmailForProductCategory(ordersWithSeafoodProducts, seafoodCustomerNames, orderDateText, additionalOrderText, " [КРЕВЕТКА]", groupOrder);
+                }
             }
-            if (hotSmokingProducts.Any())
+        }
+
+        private void SendEmailForProductCategory(List<ProcessedOrder> processedOrders, IEnumerable<string> customerNames,
+            string orderDateText, string additionalOrderText, string categoryTag, List<string> groupOrder)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Aquatir", "rep.1958@mail.ru"));
+            message.To.Add(new MailboxAddress("Получатель", "fen559256@gmail.com"));
+
+            message.Subject = $"Заявка от {string.Join(", ", customerNames)}{categoryTag}{additionalOrderText} на {orderDateText}";
+
+            var bodyBuilder = new BodyBuilder();
+
+            foreach (var processedOrder in processedOrders)
             {
-                bodyText += "<div><br/><b> <font size='3'>Горячее копчение:</font></b></div>";
-                foreach (var product in hotSmokingProducts)
+                var order = processedOrder.OriginalOrder;
+                var productsToShow = new List<ProductItem>();
+
+                // Выбираем продукты в зависимости от категории
+                if (categoryTag.Contains("МОРОЖЕННАЯ"))
+                {
+                    productsToShow = processedOrder.FrozenProducts;
+                }
+                else if (categoryTag.Contains("КРЕВЕТКА"))
+                {
+                    productsToShow = processedOrder.SeafoodProducts;
+                }
+                else
+                {
+                    productsToShow = processedOrder.RegularProducts;
+                }
+
+                // Если нет продуктов для этой категории, пропускаем
+                if (!productsToShow.Any()) continue;
+
+                var directionText = !string.IsNullOrWhiteSpace(order.Direction) ? order.Direction : "Не указано";
+                var bodyText = $"<div><b><u><font size='5'>{order.CustomerName} ({directionText}).</font><font size='3'> Заявка на {orderDateText}</font></u></b></div>";
+
+                var sortedProducts = productsToShow
+                    .OrderBy(product => GetProductGroupIndex(RemoveColorTags(product.Name), groupOrder))
+                    .ThenBy(product => RemoveColorTags(product.Name), StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(product => product.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                // Разделение на основной список и горячее копчение
+                var hotSmokingProducts = sortedProducts
+                    .Where(p => p.Name.Contains("г/к", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                var regularProducts = sortedProducts.Except(hotSmokingProducts).ToList();
+
+                foreach (var product in regularProducts)
                 {
                     bodyText += $"<div> <font size='3'>{product.DisplayName} - {product.DisplayQuantity}</font></div>";
                 }
+
+                if (hotSmokingProducts.Any())
+                {
+                    bodyText += "<div><br/><b> <font size='3'>Горячее копчение:</font></b></div>";
+                    foreach (var product in hotSmokingProducts)
+                    {
+                        bodyText += $"<div> <font size='3'>{product.DisplayName} - {product.DisplayQuantity}</font></div>";
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(order.Comment))
+                {
+                    bodyText += $"<div><br/><font size='3'>Комментарий к заказу: <i>{order.Comment}</i></font></div>";
+                }
+
+                if (order.IsAdditionalOrder)
+                {
+                    bodyText += "<div><br/><font size='3'><b>доп. заявка</b></font></div>";
+                }
+
+                bodyText += "<div><br/></div>";
+                bodyBuilder.HtmlBody += bodyText;
             }
-            if (!string.IsNullOrWhiteSpace(order.Comment))
+
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using (var client = new SmtpClient())
             {
-                bodyText += $"<div><br/><font size='3'>Комментарий к заказу: <i>{order.Comment}</i></font></div>";
+                client.ServerCertificateValidationCallback = (s, c, h, e) => true;
+                try
+                {
+                    client.Connect("smtp.mail.ru", 465, true);
+                    client.Authenticate("rep.1958@mail.ru", "zyxrhkQb4KwE0Udwz2cx");
+                    client.Send(message);
+                    client.Disconnect(true);
+                }
+                catch (Exception ex)
+                {
+                    DisplayAlert("Ошибка", $"Не удалось отправить заказы: {ex.Message}", "OK");
+                }
             }
-            if (order.IsAdditionalOrder)
-            {
-                bodyText += "<div><br/><font size='3'><b>доп. заявка</b></font></div>";
-            }
-            bodyText += "<div><br/></div>";
-            bodyBuilder.HtmlBody += bodyText;
         }
-        message.Body = bodyBuilder.ToMessageBody();
-        using (var client = new SmtpClient())
+
+        // Вспомогательный класс для обработки заказов
+        private class ProcessedOrder
         {
-            client.ServerCertificateValidationCallback = (s, c, h, e) => true;
-            try
-            {
-                client.Connect("smtp.mail.ru", 465, true);
-                client.Authenticate("rep.1958@mail.ru", "zyxrhkQb4KwE0Udwz2cx");
-                client.Send(message);
-                client.Disconnect(true);
-            }
-            catch (Exception ex)
-            {
-                DisplayAlert("Ошибка", $"Не удалось отправить заказы: {ex.Message}", "OK");
-            }
+            public Order OriginalOrder { get; set; }
+            public List<ProductItem> RegularProducts { get; set; } = new List<ProductItem>();
+            public List<ProductItem> FrozenProducts { get; set; } = new List<ProductItem>();
+            public List<ProductItem> SeafoodProducts { get; set; } = new List<ProductItem>();
         }
-    }
-}
 
         private int GetProductGroupIndex(string productName, List<string> groupOrder)
         {

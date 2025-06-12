@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:Aquatir.Converters"
              x:Class="Aquatir.ProductSelectionPage"
-             Title="Выбор продукции">
+             Title="Выбор продукции"
+             BackgroundColor="#F4F4F4">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -24,6 +25,7 @@
         <SearchBar x:Name="ProductSearchBar"
                    Placeholder="Поиск продукта по наименованию"
                    TextChanged="OnSearchTextChanged"
+                   TextColor="#2C3E50"
                    Grid.Row="0"
                    Margin="10"
                    FontSize="16" />
@@ -38,10 +40,10 @@
                 <DataTemplate>
                     <StackLayout Orientation="Horizontal" Padding="10,5">
                         <!-- Маркер -->
-                        <Label Text="•" FontSize="16" />
+                        <Label Text="•" FontSize="16" TextColor="#2C3E50"/>
 
                         <!-- Название продукта -->
-                        <Label FontSize="16" Margin="5,0,0,0">
+                        <Label FontSize="16" Margin="5,0,0,0" TextColor="#2C3E50">
                             <Label.FormattedText>
                                 <Binding Path="Name" Converter="{StaticResource NameToFormattedStringConverter}" />
                             </Label.FormattedText>

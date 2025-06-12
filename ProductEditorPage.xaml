@@ -3,11 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:model="clr-namespace:Aquatir.Model"
              x:Class="Aquatir.Model.ProductEditorPage"
-             Title="Редактор продукции">
+             Title="Редактор продукции"
+             Background="White">
+    
     <Grid RowDefinitions="Auto,*,Auto">
         <!-- Header -->
         <Label Text="Редактор продукции" 
                FontSize="24" 
+               TextColor="#2C3E50"
                HorizontalOptions="Center"
                Margin="0,20,0,10"
                Grid.Row="0"/>
@@ -35,6 +38,7 @@
                                             <!-- Expanding indicator with tap gesture -->
                                             <Label Text="{Binding IsExpanded, Converter={StaticResource BoolToArrowConverter}, ConverterParameter='▼|►'}" 
                                                    FontSize="16"
+                                                   TextColor="#2C3E50"
                                                    VerticalOptions="Center"
                                                    Grid.Column="0">
                                                 <Label.GestureRecognizers>
@@ -45,6 +49,7 @@
                                             <!-- Group name with tap gesture -->
                                             <Label Text="{Binding Name}" 
                                                    FontAttributes="Bold" 
+                                                   TextColor="#2C3E50"
                                                    FontSize="18"
                                                    Grid.Column="1">
                                                 <Label.GestureRecognizers>
@@ -74,12 +79,13 @@
                 IsVisible="{Binding IsExpanded}">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate>
-                                        <Frame Margin="5,2" Padding="10" BorderColor="#e0e0e0">
+                                        <Frame Margin="5,2" Padding="10" BorderColor="#e0e0e0" >
                                             <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
                                                 <!-- Product Name -->
                                                 <Label Text="{Binding Name}" 
                            FontSize="16" 
                            Grid.Row="0"
+                                                       TextColor="#2C3E50"
                            Grid.Column="0" />
 
                                                 <!-- Tags Row -->

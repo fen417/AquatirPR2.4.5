@@ -205,6 +205,8 @@ namespace Aquatir
                     };
                     await Application.Current.MainPage.ShowPopupAsync(quantityPopup);
                 }
+                // В методе OnProductSelected, в блоке для Android, замените создание popup на это:
+
                 else if (DeviceInfo.Platform == DevicePlatform.Android)
                 {
                     // For Android - new improved implementation
@@ -278,7 +280,7 @@ namespace Aquatir
                     {
                         Text = "OK",
                         HorizontalOptions = LayoutOptions.FillAndExpand,
-                        BackgroundColor = Colors.Green, // MAUI primary color
+                        BackgroundColor = Colors.Green,
                         TextColor = Colors.White,
                         FontSize = 16,
                         HeightRequest = 50,
@@ -317,7 +319,7 @@ namespace Aquatir
                             HorizontalOptions = LayoutOptions.Center,
                             VerticalOptions = LayoutOptions.Center
                         },
-                        Color = Color.FromArgb("#80000000") // Semi-transparent background
+                        Color = Color.FromArgb("#80000000")
                     };
 
                     // Set up event handlers
@@ -349,6 +351,14 @@ namespace Aquatir
                     {
                         popup.Close();
                         tcs.SetResult(false);
+                    };
+
+                    // КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Добавляем обработчик события Opened для установки фокуса
+                    popup.Opened += async (s, args) =>
+                    {
+                        // Небольшая задержка для корректной работы фокуса
+                        await Task.Delay(100);
+                        entry.Focus();
                     };
 
                     // Show the popup
