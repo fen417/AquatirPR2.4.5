@@ -389,6 +389,7 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                                  productNameLower.Contains("кальмар") ||
                                  productNameLower.Contains("мясо мидий") ||
                                  productNameLower.Contains("alfredo") ||
+                                 productNameLower.Contains("морской") ||
                                  productNameLower.Contains("осьминог"))
                         {
                             seafoodProducts.Add(product);
@@ -584,7 +585,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
 
             try
             {
-                // Если база данных уже загружена, то просто обновляем UI
                 if (AppState.IsDatabaseLoaded && ProductCache.CachedProducts != null && ProductCache.CachedProducts.Count > 0)
                 {
                     Console.WriteLine("[MainPage] База данных уже загружена");
@@ -594,7 +594,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 {
                     Console.WriteLine("[MainPage] Ожидание загрузки базы данных...");
 
-                    // Дать шанс базе данных загрузиться из App.xaml.cs
                     bool isLoaded = await Task.WhenAny(App.DatabaseLoadedTcs.Task, Task.Delay(3000)) == App.DatabaseLoadedTcs.Task;
 
                     if (isLoaded && await App.DatabaseLoadedTcs.Task)
@@ -677,7 +676,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                     {
                         Console.WriteLine("[MainPage] Продукция не загружена, загружаем...");
 
-                        // Если данные не были загружены в App.xaml.cs, загружаем их здесь
                         var databaseService = new DatabaseService();
                         var productGroups = await databaseService.LoadProductGroupsAsync();
 
