@@ -33,5 +33,9 @@ namespace Aquatir
                 await DisplayAlert("Ошибка", "Не удалось восстановить заказ.", "OK");
             }
         }
+        private async void OnBackButtonClicked(object sender, EventArgs e)
+        {
+            await Navigation.PopAsync(); // Возвращаемся на предыдущую страницу
+        }
     }
 }

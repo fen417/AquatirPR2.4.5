@@ -20,6 +20,14 @@ namespace Aquatir
             InitializeDatabaseAsync();
             AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
             {
+                if (args.ExceptionObject is Exception ex)
+                {
+                    Console.WriteLine("Unhandled exception: " + ex);
+                }
+            };
+
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+            {
                 Console.WriteLine($"[App] Необработанное исключение: {args.ExceptionObject}");
             };
             AppDomain.CurrentDomain.UnhandledException += (sender, args) =>

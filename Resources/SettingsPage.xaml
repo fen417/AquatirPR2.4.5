@@ -3,93 +3,185 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Aquatir.SettingsPage"
              Title="Настройки"
-             BackgroundColor="White">
-    <ScrollView>
-        <StackLayout Padding="20">
+             BackgroundColor="#F0F2F5">
 
-            <!-- Settings switches -->
-            <Frame BorderColor="#e0e0e0" Margin="0,5">
-                <Grid ColumnDefinitions="*, Auto">
-                    <Label Text="Автоматический возврат в главное меню после выбора товара" 
-                           VerticalOptions="Center"
-                           FontSize="16"
-                           TextColor="#2C3E50"
-                           Grid.Column="0" />
-                    <Switch x:Name="AutoReturnSwitch" 
-                            Grid.Column="1" />
-                </Grid>
-            </Frame>
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Color x:Key="PrimaryColor">#4285F4</Color>
+            <Color x:Key="AccentColor">#34A853</Color>
+            <Color x:Key="WarningColor">#FBBC04</Color>
+            <Color x:Key="ErrorColor">#EA4335</Color>
+            <Color x:Key="TextColorPrimary">#212121</Color>
+            <Color x:Key="TextColorSecondary">#424242</Color>
+            <Color x:Key="TextColorHint">#757575</Color>
+            <Color x:Key="CardBackgroundColor">#FFFFFF</Color>
+            <Color x:Key="BorderColorLight">#E0E0E0</Color>
+            <Color x:Key="SelectedListItemColor">#E8F5E9</Color>
+            <Color x:Key="DividerColor">#EEEEEE</Color>
 
-            <Frame BorderColor="#e0e0e0" Margin="0,5">
-                <Grid ColumnDefinitions="*, Auto">
-                    <Label Text="Отключить цветовые подсказки" 
-                           VerticalOptions="Center"
-                           TextColor="#2C3E50"
-                           FontSize="16"
-                           Grid.Column="0" />
-                    <Switch x:Name="IgnoreColorsSwitch" 
-                            Grid.Column="1" />
-                </Grid>
-            </Frame>
+            <Style TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource TextColorSecondary}" />
+                <Setter Property="FontFamily" Value="Roboto" />
+                <Setter Property="LineHeight" Value="1.2" />
+            </Style>
 
-            <Frame BorderColor="#e0e0e0" Margin="0,5">
-                <Grid ColumnDefinitions="*, Auto">
-                    <Label Text="Отображать продукцию в упаковках (УП.)"                              
-                           VerticalOptions="Center"
-                           TextColor="#2C3E50"
-                           FontSize="16"
-                           Grid.Column="0" />
-                    <Switch x:Name="ShowPackagedProductsSwitch" 
-                            Grid.Column="1" />
-                </Grid>
-            </Frame>
-            
-            <Frame BorderColor="#e0e0e0" Margin="0,5">
-                <Grid ColumnDefinitions="*, Auto">
-                    <Label Text="Показывать изображение продукта при выборе" 
-               VerticalOptions="Center"
-                           TextColor="#2C3E50"
-               FontSize="16"
-               Grid.Column="0" />
-                    <Switch x:Name="ShowProductImagesSwitch" 
-                Grid.Column="1" />
-                </Grid>
-            </Frame>
+            <Style TargetType="Button">
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="HeightRequest" Value="50" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="VisualStateManager.VisualStateGroups">
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="1" />
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Pressed">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="0.8" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </Setter>
+            </Style>
 
+            <Style TargetType="Border">
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="Stroke" Value="{StaticResource BorderColorLight}" />
+                <Setter Property="StrokeThickness" Value="1" />
+                <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+                <Setter Property="Padding" Value="15" />
+                <Setter Property="Shadow">
+                    <Setter.Value>
+                        <Shadow Brush="Black" Offset="5,5" Radius="10" Opacity="0.1" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
 
-            <StackLayout VerticalOptions="EndAndExpand" Margin="0,20,0,0">
-                <Button Text="Редактор продукции" 
-                    Clicked="OnProductEditorClicked"
-                    BackgroundColor="#107C10"
-                    TextColor="White"
-                    FontSize="18"
-                    FontAttributes="Bold" 
-                    CornerRadius="10"
-                    Margin="0,20,0,5" />
+            <Style TargetType="Entry">
+                <Setter Property="PlaceholderColor" Value="{StaticResource TextColorHint}" />
+                <Setter Property="BackgroundColor" Value="Transparent" />
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Keyboard" Value="Text" />
+            </Style>
 
+            <Style TargetType="Picker">
+                <Setter Property="TitleColor" Value="{StaticResource TextColorHint}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Margin" Value="0,5,0,5" />
+            </Style>
 
-                <Button Text="Что нового?" 
-                    Clicked="OnWhatsNewClicked"
-                    FontAttributes="Bold" 
-                    BackgroundColor="#0078D7"
-                    FontSize="18"
-                    CornerRadius="10"
-                    TextColor="White"
-                    Margin="0,20,0,5" />
+            <Style TargetType="DatePicker">
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Margin" Value="0,5,0,5" />
+            </Style>
 
-                <Button Text="Сообщить об ошибке" 
-                    Clicked="OnReportIssueClicked"
-                    FontAttributes="Bold" 
-                    FontSize="18"
-                    CornerRadius="10"
-                    BackgroundColor="#0078D7"
-                    TextColor="White"
-                    Margin="0,5" />
-                <Label x:Name="VersionLabel" 
-                   Text="Версия программы: r3.2.1 от 12.06.2025" 
-                   FontSize="14" 
-                   HorizontalOptions="Center" />
-            </StackLayout>
-        </StackLayout>
-    </ScrollView>
+            <Style TargetType="CheckBox">
+                <Setter Property="Color" Value="{StaticResource PrimaryColor}" />
+            </Style>
+
+            <Style x:Key="RemoveButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource ErrorColor}" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="WidthRequest" Value="35" />
+                <Setter Property="HeightRequest" Value="35" />
+                <Setter Property="CornerRadius" Value="17" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Прокручиваемая часть -->
+        <ScrollView Grid.Row="0" VerticalOptions="FillAndExpand">
+            <VerticalStackLayout Padding="20" Spacing="10">
+
+                <Border Margin="0,5">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="Автоматический возврат в главное меню после выбора товара"
+                               VerticalOptions="Center"
+                               FontSize="16"
+                               TextColor="{StaticResource TextColorSecondary}"
+                               Grid.Column="0" />
+                        <Switch x:Name="AutoReturnSwitch" Grid.Column="1" />
+                    </Grid>
+                </Border>
+
+                <Border Margin="0,5">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="Отключить цветовые подсказки"
+                               VerticalOptions="Center"
+                               FontSize="16"
+                               TextColor="{StaticResource TextColorSecondary}"
+                               Grid.Column="0" />
+                        <Switch x:Name="IgnoreColorsSwitch" Grid.Column="1" />
+                    </Grid>
+                </Border>
+
+                <Border Margin="0,5">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="Отображать продукцию в упаковках (УП.)"
+                               VerticalOptions="Center"
+                               FontSize="16"
+                               TextColor="{StaticResource TextColorSecondary}"
+                               Grid.Column="0" />
+                        <Switch x:Name="ShowPackagedProductsSwitch" Grid.Column="1" />
+                    </Grid>
+                </Border>
+
+                <Border Margin="0,5">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="Показывать изображение продукта при выборе"
+                               VerticalOptions="Center"
+                               FontSize="16"
+                               TextColor="{StaticResource TextColorSecondary}"
+                               Grid.Column="0" />
+                        <Switch x:Name="ShowProductImagesSwitch" Grid.Column="1" />
+                    </Grid>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Фиксированное нижнее меню -->
+        <Grid Grid.Row="1" Padding="20" BackgroundColor="#F0F2F5">
+            <VerticalStackLayout Spacing="15"
+                                 VerticalOptions="End"
+                                 HorizontalOptions="FillAndExpand">
+                <Button Text="Редактор продукции"
+                        Clicked="OnProductEditorClicked"
+                        BackgroundColor="#107C10" />
+
+                <Button Text="Что нового?"
+                        Clicked="OnWhatsNewClicked"
+                        BackgroundColor="#0078D7" />
+
+                <Button Text="Сообщить об ошибке"
+                        Clicked="OnReportIssueClicked"
+                        BackgroundColor="#0078D7" />
+
+                <Label x:Name="VersionLabel"
+                       Text="Версия программы: r3.3.0 от 07.07.2025"
+                       FontSize="14"
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource TextColorHint}"
+                       Margin="0,10,0,0" />
+            </VerticalStackLayout>
+        </Grid>
+
+    </Grid>
 </ContentPage>

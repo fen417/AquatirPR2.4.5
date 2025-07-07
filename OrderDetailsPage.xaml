@@ -1,57 +1,182 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:system="clr-namespace:System;assembly=netstandard"
              x:Class="Aquatir.OrderDetailsPage"
              Title="Детали заказа"
-             BackgroundColor="#F4F4F4">
-    <StackLayout Padding="10" VerticalOptions="FillAndExpand">
-        <Label Text="{Binding CustomerName}" 
-               FontSize="24" 
-               HorizontalOptions="Center" 
-               TextColor="#2C3E50" 
-               Margin="10,10,10,5" />
+             BackgroundColor="#F0F2F5">
 
-        <Label Text="{Binding OrderDate, StringFormat='На какую дату сделан заказ: {0:dd.MM.yyyy}'}" 
-               TextColor="#7F8C8D" 
-               HorizontalOptions="Center" 
-               Margin="10,0,10,10" />
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Color x:Key="PrimaryColor">#4285F4</Color>
+            <Color x:Key="AccentColor">#34A853</Color>
+            <Color x:Key="WarningColor">#FBBC04</Color>
+            <Color x:Key="ErrorColor">#EA4335</Color>
+            <Color x:Key="TextColorPrimary">#212121</Color>
+            <Color x:Key="TextColorSecondary">#424242</Color>
+            <Color x:Key="TextColorHint">#757575</Color>
+            <Color x:Key="CardBackgroundColor">#FFFFFF</Color>
+            <Color x:Key="BorderColorLight">#E0E0E0</Color>
+            <Color x:Key="SelectedListItemColor">#E8F5E9</Color>
+            <Color x:Key="DividerColor">#EEEEEE</Color>
 
-        <ListView ItemsSource="{Binding Products}" 
-                  Margin="10,10,10,10" 
-                  SeparatorColor="#ECF0F1">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <TextCell Text="{Binding DisplayName}" 
-                              Detail="{Binding DisplayQuantity}" 
-                              TextColor="#2C3E50"
-                              DetailColor="#7F8C8D"/>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+            <Style TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource TextColorSecondary}" />
+                <Setter Property="FontFamily" Value="Roboto" />
+                <Setter Property="LineHeight" Value="1.2" />
+            </Style>
 
-        <Label Text="{Binding Comment, StringFormat='Комментарий: {0}'}" 
-               FontSize="18" 
-               TextColor="#2C3E50"
-               Margin="20,0,20,10" />
+            <Style TargetType="Button">
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="HeightRequest" Value="50" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="VisualStateManager.VisualStateGroups">
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="1" />
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Pressed">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="0.8" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </Setter>
+            </Style>
 
-        <Button Text="Восстановить для редактирования"
-                Clicked="OnRestoreOrderClicked"
-                VerticalOptions="Start"
-                BackgroundColor="#3498DB"
-                TextColor="White"
-                CornerRadius="10"
-                Padding="10" 
-                Margin="10,10,10,10" 
-                FontAttributes="Bold" 
-                FontSize="16"/>
+            <Style TargetType="Border">
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="Stroke" Value="{StaticResource BorderColorLight}" />
+                <Setter Property="StrokeThickness" Value="1" />
+                <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+                <Setter Property="Padding" Value="15" />
+                <Setter Property="Shadow">
+                    <Setter.Value>
+                        <Shadow Brush="Black" Offset="5,5" Radius="10" Opacity="0.1" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
 
-        <Button Text="Назад" 
-                Command="{Binding GoBackCommand}"
-                BackgroundColor="#E74C3C"
-                TextColor="White"
-                CornerRadius="10"
-                Margin="10,10,10,10"
-                FontAttributes="Bold" 
-                FontSize="16" />
-    </StackLayout>
+            <Style TargetType="Entry">
+                <Setter Property="PlaceholderColor" Value="{StaticResource TextColorHint}" />
+                <Setter Property="BackgroundColor" Value="Transparent" />
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Keyboard" Value="Text" />
+            </Style>
+
+            <Style TargetType="Picker">
+                <Setter Property="TitleColor" Value="{StaticResource TextColorHint}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Margin" Value="0,5,0,5" />
+            </Style>
+
+            <Style TargetType="DatePicker">
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Margin" Value="0,5,0,5" />
+            </Style>
+
+            <Style TargetType="CheckBox">
+                <Setter Property="Color" Value="{StaticResource PrimaryColor}" />
+            </Style>
+
+            <Style x:Key="SectionHeaderStyle" TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="Margin" Value="0,10,0,5" />
+            </Style>
+
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*,Auto">
+
+        <ScrollView Grid.Row="0" VerticalOptions="FillAndExpand">
+            <VerticalStackLayout Padding="20" Spacing="15">
+                <Label Text="{Binding CustomerName}"
+                       Style="{StaticResource SectionHeaderStyle}"
+                       HorizontalOptions="Center"
+                       Margin="0,10,0,5" />
+
+                <Label Text="{Binding OrderDate, StringFormat='На какую дату сделан заказ: {0:dd.MM.yyyy}'}"
+                       TextColor="{StaticResource TextColorSecondary}"
+                       HorizontalOptions="Center"
+                       FontSize="16"
+                       Margin="0,0,0,15" />
+
+                <Label Text="Список товаров:"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource TextColorPrimary}"
+                       Margin="0,0,0,5" />
+
+                <Border Padding="10">
+                    <CollectionView ItemsSource="{Binding Products}"
+                                    SelectionMode="None">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="8" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="0,5" ColumnDefinitions="*,Auto">
+                                    <Label Grid.Column="0"
+                                           Text="{Binding DisplayName}"
+                                           FontSize="16"
+                                           TextColor="{StaticResource TextColorPrimary}"
+                                           VerticalOptions="Center" />
+                                    <Label Grid.Column="1"
+                                           Text="{Binding DisplayQuantity}"
+                                           FontSize="14"
+                                           TextColor="{StaticResource TextColorSecondary}"
+                                           VerticalOptions="Center"
+                                           Margin="5,0,0,0" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Border>
+
+                <Label Text="Комментарий:"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource TextColorPrimary}"
+                       Margin="0,15,0,5" />
+
+                <Border Padding="10">
+                    <Label Text="{Binding Comment}"
+                           FontSize="16"
+                           TextColor="{StaticResource TextColorSecondary}"
+                           LineBreakMode="WordWrap" />
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="1" Padding="20" BackgroundColor="#F0F2F5">
+            <VerticalStackLayout Spacing="15"
+                                 VerticalOptions="End"
+                                 HorizontalOptions="FillAndExpand">
+                <Button Text="Восстановить для редактирования"
+                        Clicked="OnRestoreOrderClicked"
+                        BackgroundColor="{StaticResource AccentColor}" />
+
+                <Button Text="Назад"
+                        Clicked="OnBackButtonClicked"
+                        BackgroundColor="{StaticResource PrimaryColor}" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
 </ContentPage>

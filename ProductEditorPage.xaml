@@ -4,53 +4,146 @@
              xmlns:model="clr-namespace:Aquatir.Model"
              x:Class="Aquatir.Model.ProductEditorPage"
              Title="Редактор продукции"
-             Background="White">
-    
+             BackgroundColor="#F0F2F5">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Color x:Key="PrimaryColor">#4285F4</Color>
+            <Color x:Key="AccentColor">#34A853</Color>
+            <Color x:Key="WarningColor">#FBBC04</Color>
+            <Color x:Key="ErrorColor">#EA4335</Color>
+            <Color x:Key="TextColorPrimary">#212121</Color>
+            <Color x:Key="TextColorSecondary">#424242</Color>
+            <Color x:Key="TextColorHint">#757575</Color>
+            <Color x:Key="CardBackgroundColor">#FFFFFF</Color>
+            <Color x:Key="BorderColorLight">#E0E0E0</Color>
+            <Color x:Key="SelectedListItemColor">#E8F5E9</Color>
+            <Color x:Key="DividerColor">#EEEEEE</Color>
+
+            <Style TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource TextColorSecondary}" />
+                <Setter Property="FontFamily" Value="Roboto" />
+                <Setter Property="LineHeight" Value="1.2" />
+            </Style>
+
+            <Style TargetType="Button">
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="HeightRequest" Value="50" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="VisualStateManager.VisualStateGroups">
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="1" />
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Pressed">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="0.8" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </Setter>
+            </Style>
+
+            <Style TargetType="Border">
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="Stroke" Value="{StaticResource BorderColorLight}" />
+                <Setter Property="StrokeThickness" Value="1" />
+                <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+                <Setter Property="Padding" Value="15" />
+                <Setter Property="Shadow">
+                    <Setter.Value>
+                        <Shadow Brush="Black" Offset="5,5" Radius="10" Opacity="0.1" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="Entry">
+                <Setter Property="PlaceholderColor" Value="{StaticResource TextColorHint}" />
+                <Setter Property="BackgroundColor" Value="Transparent" />
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Keyboard" Value="Text" />
+            </Style>
+
+            <Style TargetType="Picker">
+                <Setter Property="TitleColor" Value="{StaticResource TextColorHint}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Margin" Value="0,5,0,5" />
+            </Style>
+
+            <Style TargetType="DatePicker">
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Margin" Value="0,5,0,5" />
+            </Style>
+
+            <Style TargetType="CheckBox">
+                <Setter Property="Color" Value="{StaticResource PrimaryColor}" />
+            </Style>
+
+            <Style x:Key="RemoveButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource ErrorColor}" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="WidthRequest" Value="35" />
+                <Setter Property="HeightRequest" Value="35" />
+                <Setter Property="CornerRadius" Value="17" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
+
+            <model:BoolToStringConverter x:Key="BoolToArrowConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
     <Grid RowDefinitions="Auto,*,Auto">
-        <!-- Header -->
-        <Label Text="Редактор продукции" 
-               FontSize="24" 
-               TextColor="#2C3E50"
-               HorizontalOptions="Center"
+        <Label Text="Редактор продукции"
+               FontSize="24"
+               TextColor="{StaticResource TextColorPrimary}" HorizontalOptions="Center"
                Margin="0,20,0,10"
                Grid.Row="0"/>
 
-        <!-- Loading indicator -->
-        <ActivityIndicator x:Name="LoadingIndicator" 
-                          IsVisible="True"
-                          IsRunning="True"
-                          HorizontalOptions="Center"
-                          VerticalOptions="Center"
-                          Grid.Row="1" />
+        <ActivityIndicator x:Name="LoadingIndicator"
+                           IsVisible="True"
+                           IsRunning="True"
+                           Color="{StaticResource PrimaryColor}" HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           Grid.Row="1" />
 
-        <!-- Products list -->
         <ScrollView Grid.Row="1">
             <CollectionView x:Name="GroupsCollectionView"
-                           IsVisible="True">
+                            IsVisible="True"
+                            Margin="10" SelectionMode="None">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <StackLayout Spacing="10" Padding="10">
-                            <!-- Group header -->
-                            <Frame BackgroundColor="#f0f0f0" Padding="10" Margin="0,0,0,5">
+                        <Border Margin="0,5">
+                            <VerticalStackLayout Spacing="10" Padding="0">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <StackLayout Grid.Column="0">
-                                        <Grid ColumnDefinitions="Auto,*">
-                                            <!-- Expanding indicator with tap gesture -->
-                                            <Label Text="{Binding IsExpanded, Converter={StaticResource BoolToArrowConverter}, ConverterParameter='▼|►'}" 
+                                        <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,5">
+                                            <Label Text="{Binding IsExpanded, Converter={StaticResource BoolToArrowConverter}, ConverterParameter='▼|►'}"
                                                    FontSize="16"
-                                                   TextColor="#2C3E50"
-                                                   VerticalOptions="Center"
-                                                   Grid.Column="0">
+                                                   TextColor="{StaticResource TextColorPrimary}" VerticalOptions="Center"
+                                                   Grid.Column="0"
+                                                   Margin="0,0,5,0">
                                                 <Label.GestureRecognizers>
                                                     <TapGestureRecognizer Tapped="OnGroupTapped" />
                                                 </Label.GestureRecognizers>
                                             </Label>
 
-                                            <!-- Group name with tap gesture -->
-                                            <Label Text="{Binding Name}" 
-                                                   FontAttributes="Bold" 
-                                                   TextColor="#2C3E50"
-                                                   FontSize="18"
+                                            <Label Text="{Binding Name}"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource TextColorPrimary}" FontSize="18"
                                                    Grid.Column="1">
                                                 <Label.GestureRecognizers>
                                                     <TapGestureRecognizer Tapped="OnGroupTapped" />
@@ -58,107 +151,89 @@
                                             </Label>
                                         </Grid>
 
-                                        <!-- Loading indicator for group -->
                                         <ActivityIndicator IsVisible="{Binding IsLoading}"
-                                                         IsRunning="{Binding IsLoading}"
-                                                         HeightRequest="20"
-                                                         WidthRequest="20"
-                                                         HorizontalOptions="Start" />
+                                                           IsRunning="{Binding IsLoading}"
+                                                           Color="{StaticResource PrimaryColor}" HeightRequest="20"
+                                                           WidthRequest="20"
+                                                           HorizontalOptions="Start" />
                                     </StackLayout>
 
-                                    <Button Text="Добавить продукт" 
+                                    <Button Text="Добавить продукт"
                                             Clicked="OnAddProductClicked"
-                                            BackgroundColor="#0078D7"
-                                            TextColor="White"
-                                            HorizontalOptions="End"
-                                            Grid.Column="1" />
+                                            BackgroundColor="{StaticResource PrimaryColor}" HorizontalOptions="End"
+                                            Grid.Column="1"
+                                            WidthRequest="150" HeightRequest="40" CornerRadius="5" FontSize="14" />
                                 </Grid>
-                            </Frame>
 
-                            <CollectionView ItemsSource="{Binding Products}"
-                IsVisible="{Binding IsExpanded}">
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate>
-                                        <Frame Margin="5,2" Padding="10" BorderColor="#e0e0e0" >
-                                            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
-                                                <!-- Product Name -->
-                                                <Label Text="{Binding Name}" 
-                           FontSize="16" 
-                           Grid.Row="0"
-                                                       TextColor="#2C3E50"
-                           Grid.Column="0" />
+                                <CollectionView ItemsSource="{Binding Products}"
+                                                IsVisible="{Binding IsExpanded}"
+                                                Margin="0,10,0,0">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,2" Padding="10" Stroke="{StaticResource BorderColorLight}">
+                                                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
+                                                    <Label Text="{Binding Name}"
+                                                           FontSize="16"
+                                                           TextColor="{StaticResource TextColorPrimary}" Grid.Row="0"
+                                                           Grid.Column="0" />
 
-                                                <!-- Tags Row -->
-                                                <FlexLayout Grid.Row="1" 
-                               Grid.Column="0"
-                               Direction="Row"
-                               JustifyContent="Start" 
-                               AlignItems="Center">
-                                                    <Label Text="Заканчивается" 
-                               TextColor="Orange"
-                               FontSize="12"
-                               Margin="0,0,5,0"
-                               Padding="5,2"
-                               BackgroundColor="#fff3e0"
-                               IsVisible="{Binding IsEnd}" />
+                                                    <FlexLayout Grid.Row="1"
+                                                                Grid.Column="0"
+                                                                Direction="Row"
+                                                                JustifyContent="Start"
+                                                                AlignItems="Center"
+                                                                Margin="0,5,0,0">
+                                                        <Label Text="Заканчивается"
+                                                               TextColor="Orange"
+                                                               FontSize="12"
+                                                               Margin="0,0,5,0"
+                                                               Padding="5,2"
+                                                               BackgroundColor="#fff3e0"
+                                                               IsVisible="{Binding IsEnd}" />
 
-                                                    <Label Text="Новинка" 
-                               TextColor="Red"
-                               FontSize="12"
-                               Margin="0,0,5,0"
-                               Padding="5,2"
-                               BackgroundColor="#ffebee"
-                               IsVisible="{Binding IsNew}" />
+                                                        <Label Text="Новинка"
+                                                               TextColor="Red"
+                                                               FontSize="12"
+                                                               Margin="0,0,5,0"
+                                                               Padding="5,2"
+                                                               BackgroundColor="#ffebee"
+                                                               IsVisible="{Binding IsNew}" />
 
-                                                    <Label Text="Снова в продаже" 
-                               TextColor="Green"
-                               FontSize="12"
-                               Padding="5,2"
-                               BackgroundColor="#e8f5e9"
-                               IsVisible="{Binding IsRes}" />
-                                                </FlexLayout>
+                                                        <Label Text="Снова в продаже"
+                                                               TextColor="Green"
+                                                               FontSize="12"
+                                                               Padding="5,2"
+                                                               BackgroundColor="#e8f5e9"
+                                                               IsVisible="{Binding IsRes}" />
+                                                    </FlexLayout>
 
-                                                <!-- Action Buttons -->
-                                                <Button Text="Ред." 
-                            Clicked="OnEditProductClicked"
-                            BackgroundColor="#0078D7"
-                            TextColor="White"
-                            HorizontalOptions="End"
-                            Grid.RowSpan="2"
-                            Grid.Column="1"
-                            Margin="0,0,5,0" />
-
-                                                <Button Text="Удалить" 
-                            Clicked="OnDeleteProductClicked"
-                            BackgroundColor="#E81123"
-                            TextColor="White"
-                            HorizontalOptions="End"
-                            Grid.RowSpan="2"
-                            Grid.Column="2" />
-                                            </Grid>
-                                        </Frame>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
-                        </StackLayout>
+                                                    <Button Text="Ред."
+                                                            Clicked="OnEditProductClicked"
+                                                            BackgroundColor="{StaticResource PrimaryColor}" HorizontalOptions="End"
+                                                            Grid.RowSpan="2"
+                                                            Grid.Column="1"
+                                                            WidthRequest="60" HeightRequest="35" CornerRadius="5" FontSize="12" Margin="0,0,5,0" />
+                                                    <Button Text="Удалить"
+                                                            Clicked="OnDeleteProductClicked"
+                                                            BackgroundColor="{StaticResource ErrorColor}" HorizontalOptions="End"
+                                                            Grid.RowSpan="2"
+                                                            Grid.Column="2"
+                                                            WidthRequest="80" HeightRequest="35" CornerRadius="5" FontSize="12" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+                        </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
         </ScrollView>
 
-        <!-- Save button -->
-        <Button Text="Сохранить изменения" 
+        <Button Text="Сохранить изменения"
                 Grid.Row="2"
                 Clicked="OnSaveChangesClicked"
-                BackgroundColor="#107C10"
-                TextColor="White"
-                Margin="20" />
+                BackgroundColor="{StaticResource AccentColor}" Margin="20" />
     </Grid>
-
-    <!-- Converters -->
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <model:BoolToStringConverter x:Key="BoolToArrowConverter" />
-        </ResourceDictionary>
-    </ContentPage.Resources>
 </ContentPage>

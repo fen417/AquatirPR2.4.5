@@ -10,21 +10,22 @@ namespace Aquatir
             InitializeComponent();
             LoadOrderHistory();
         }
+
         private void OnRefreshButtonClicked(object sender, EventArgs e)
         {
             RefreshOrderHistory();
         }
-        private async void OnOrderTapped(object sender, ItemTappedEventArgs e)
+
+        // Новый обработчик для CollectionView (вместо OnOrderTapped)
+        private async void OnOrderSelected(object sender, SelectionChangedEventArgs e)
         {
-            if (e.Item is Order selectedOrder && selectedOrder != null)
+            if (e.CurrentSelection.FirstOrDefault() is Order selectedOrder)
             {
                 await Navigation.PushAsync(new OrderDetailsPage(selectedOrder));
-            }
-            else
-            {
-                await DisplayAlert("Ошибка", "Не удалось открыть заказ. Пожалуйста, попробуйте снова.", "OK");
+                OrdersCollectionView.SelectedItem = null; // сброс выбора, чтобы можно было повторно кликнуть по элементу
             }
         }
+
         private async void OnClearOrderHistoryClicked(object sender, EventArgs e)
         {
             bool userConfirmed = await DisplayAlert("Подтверждение",
@@ -36,23 +37,24 @@ namespace Aquatir
             {
                 var orderHistoryService = new OrderHistoryService();
                 orderHistoryService.ClearOrderHistory();
-                OrdersListView.ItemsSource = new List<Order>();
+                OrdersCollectionView.ItemsSource = new List<Order>(); // очистка визуально
 
                 await DisplayAlert("Успех", "История заказов успешно очищена.", "OK");
             }
         }
+
         public void LoadOrderHistory()
         {
             var orderHistoryService = new OrderHistoryService();
             var history = orderHistoryService.LoadOrderHistory();
-            OrdersListView.ItemsSource = history.Orders;
+            OrdersCollectionView.ItemsSource = history.Orders;
         }
+
         public void RefreshOrderHistory()
         {
-            // Загружаем обновленную историю заказов
             var orderHistoryService = new OrderHistoryService();
             var history = orderHistoryService.LoadOrderHistory();
-            OrdersListView.ItemsSource = history.Orders;
+            OrdersCollectionView.ItemsSource = history.Orders;
         }
     }
 }

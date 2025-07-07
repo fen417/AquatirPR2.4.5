@@ -51,7 +51,7 @@ namespace Aquatir
             }
         }
 
-        public string FormattedOrderDetails => $"{FormattedCompletionDate}\n{FormattedTotalAmount}";
+        public string FormattedOrderDetails => $"{FormattedCompletionDate}";
 
         public string GetFormattedOrderSummary()
         {

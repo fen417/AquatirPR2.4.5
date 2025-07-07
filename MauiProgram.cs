@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Maui;
 using Plugin.LocalNotification;
 using Microsoft.Maui.LifecycleEvents;
+using CommunityToolkit.Maui;
 
 namespace Aquatir
 {
@@ -9,17 +10,11 @@ namespace Aquatir
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
-            builder
-                .UseMauiApp<App>()
-                .UseMauiCommunityToolkit()
-                .UseLocalNotification()
-                .ConfigureFonts(fonts =>
-                {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                });
-
-
+            builder.UseMauiApp<App>().UseMauiCommunityToolkit().UseLocalNotification().ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            }).UseMauiCommunityToolkitMediaElement();
 #if WINDOWS
         builder.ConfigureLifecycleEvents(events =>
         {
@@ -32,7 +27,6 @@ namespace Aquatir
             });
         });
 #endif
-
             return builder.Build();
         }
     }

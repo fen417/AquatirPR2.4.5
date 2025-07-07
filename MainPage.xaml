@@ -4,8 +4,7 @@
              xmlns:converters="clr-namespace:Aquatir.Converters"
              x:Class="Aquatir.MainPage"
              Title="Aquatir"
-             BackgroundColor="#F4F4F4">
-
+             BackgroundColor="#F0F2F5">
     <ContentPage.ToolbarItems>
         <ToolbarItem IconImageSource="question.png" Order="Primary" Clicked="OnHelpClicked" />
     </ContentPage.ToolbarItems>
@@ -13,28 +12,101 @@
     <ContentPage.Resources>
         <ResourceDictionary>
             <converters:RemoveButtonVisibilityConverter x:Key="RemoveButtonVisibilityConverter" />
+
+            <Style TargetType="Label">
+                <Setter Property="TextColor" Value="#333333" />
+                <Setter Property="FontFamily" Value="Roboto" />
+            </Style>
+
+            <Style TargetType="Button">
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="HeightRequest" Value="50" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="VisualStateManager.VisualStateGroups">
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="1" />
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Pressed">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="0.8" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </Setter>
+            </Style>
+
+            <Style TargetType="Border">
+                <Setter Property="BackgroundColor" Value="White" />
+                <Setter Property="Stroke" Value="#E0E0E0" />
+                <Setter Property="StrokeThickness" Value="1" />
+                <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+                <Setter Property="Padding" Value="15" />
+                <Setter Property="Shadow">
+                    <Setter.Value>
+                        <Shadow Brush="Black" Offset="5,5" Radius="10" Opacity="0.1" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="Entry">
+                <Setter Property="PlaceholderColor" Value="#9E9E9E" />
+                <Setter Property="BackgroundColor" Value="Transparent" />
+                <Setter Property="TextColor" Value="#333333" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Keyboard" Value="Text" />
+            </Style>
+
+            <Style TargetType="Picker">
+                <Setter Property="TitleColor" Value="#616161" />
+                <Setter Property="BackgroundColor" Value="#FFFFFF" />
+                <Setter Property="TextColor" Value="#333333" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Margin" Value="0,5,0,5" />
+            </Style>
+
+            <Style TargetType="DatePicker">
+                <Setter Property="TextColor" Value="#333333" />
+                <Setter Property="BackgroundColor" Value="#FFFFFF" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Margin" Value="0,5,0,5" />
+            </Style>
+
+            <Style TargetType="CheckBox">
+                <Setter Property="Color" Value="#4285F4" />
+            </Style>
+
+            <Style x:Key="RemoveButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#EA4335" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="WidthRequest" Value="35" />
+                <Setter Property="HeightRequest" Value="35" />
+                <Setter Property="CornerRadius" Value="17" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
+
         </ResourceDictionary>
     </ContentPage.Resources>
 
     <ScrollView>
-        <VerticalStackLayout Spacing="15" Padding="20">
-            <Border BackgroundColor="White" 
-                    Stroke="LightGray" 
-                    StrokeThickness="1" 
-                    StrokeShape="RoundRectangle 10"
-                    Padding="15"
-                    IsVisible="{Binding ShowCityPicker}">
+        <VerticalStackLayout Spacing="20" Padding="20">
+            <Border IsVisible="{Binding ShowCityPicker}">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Выберите направление:" 
-                           FontAttributes="Bold" 
-                           FontSize="20" 
-                           TextColor="#2C3E50"/>
-
-                    <Picker x:Name="DirectionPicker" 
-                            Title="Выберите направление" 
-                            SelectedIndexChanged="OnDirectionChanged"
-                            BackgroundColor="#F8F9FA"
-                            TitleColor="Gray">
+                    <Label Text="Выберите направление:"
+                           FontAttributes="Bold"
+                           FontSize="22" TextColor="#212121" />
+                    <Picker x:Name="DirectionPicker"
+                            Title="Выберите направление"
+                            SelectedIndexChanged="OnDirectionChanged">
                         <Picker.Items>
                             <x:String>Тирасполь</x:String>
                             <x:String>Бендеры</x:String>
@@ -45,274 +117,200 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border BackgroundColor="White" 
-                    Stroke="LightGray" 
-                    StrokeThickness="1" 
-                    StrokeShape="RoundRectangle 10"
-                    Padding="15"
-                    IsVisible="{Binding ShowCityPicker}">
+            <Border IsVisible="{Binding ShowCityPicker}">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Выберите заказчика или введите имя вручную:" 
-                           FontAttributes="Bold" 
-                           FontSize="20" 
-                           TextColor="#2C3E50"/>
-
-                    <Picker x:Name="CustomerPicker" 
-                            Title="Выберите заказчика" 
-                            SelectedIndexChanged="OnCustomerSelected"
-                            BackgroundColor="#F8F9FA"
-                            TitleColor="Gray"/>
+                    <Label Text="Выберите заказчика или введите имя вручную:"
+                           FontAttributes="Bold"
+                           FontSize="22"
+                           TextColor="#212121" />
+                    <Picker x:Name="CustomerPicker"
+                            Title="Выберите заказчика"
+                            SelectedIndexChanged="OnCustomerSelected" />
                 </VerticalStackLayout>
             </Border>
 
-            <Entry x:Name="CustomerNameEntry" 
-                   Placeholder="Введите имя заказчика..." 
-                   PlaceholderColor="Gray"
-                   FontAttributes="Italic"
-                   FontSize="16"
-                   BackgroundColor="White"
-                   TextColor="#2C3E50"
-                   TextChanged="OnCustomerNameEntryTextChanged" />
+            <Border BackgroundColor="White"
+                    Stroke="#E0E0E0"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="10"  Margin="0,5,0,5">
+                <Entry x:Name="CustomerNameEntry"
+                       Placeholder="Введите имя заказчика..."
+                       FontAttributes="None"
+                       TextColor="#333333"
+                       PlaceholderColor="#9E9E9E"
+                       Background="Transparent"/>
+            </Border>
 
             <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
-                <CheckBox x:Name="IsPrivatePersonCheckBox" 
-                          IsVisible="{Binding IsManager}" 
-                          CheckedChanged="OnPrivatePersonCheckedChanged"
-                          Color="#3498DB"/>
-                <Label Text="на частное лицо" 
-                       IsVisible="{Binding IsManager}" 
-                       VerticalOptions="Center" 
+                <CheckBox x:Name="IsPrivatePersonCheckBox"
+                          IsVisible="{Binding IsManager}"
+                          CheckedChanged="OnPrivatePersonCheckedChanged" />
+                <Label Text="на частное лицо"
+                       IsVisible="{Binding IsManager}"
+                       VerticalOptions="Center"
                        FontSize="16"
-                       TextColor="#2C3E50"/>
+                       TextColor="#333333" />
             </HorizontalStackLayout>
 
             <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
-                <CheckBox x:Name="IsAdditionalOrderCheckBox" 
-                          IsVisible="{Binding IsNotManager}" 
-                          CheckedChanged="OnAdditionalOrderCheckedChanged"
-                          Color="#3498DB"/>
-                <Label Text="доп. заявка" 
-                       IsVisible="{Binding IsNotManager}" 
-                       VerticalOptions="Center" 
+                <CheckBox x:Name="IsAdditionalOrderCheckBox"
+                          IsVisible="{Binding IsNotManager}"
+                          CheckedChanged="OnAdditionalOrderCheckedChanged" />
+                <Label Text="доп. заявка"
+                       IsVisible="{Binding IsNotManager}"
+                       VerticalOptions="Center"
                        FontSize="16"
-                       TextColor="#2C3E50"/>
+                       TextColor="#333333" />
             </HorizontalStackLayout>
 
-            <Label Text="Заказ заявки на:" 
-                   FontAttributes="Bold" 
-                   FontSize="20" 
-                   TextColor="#2C3E50"/>
-            <DatePicker x:Name="OrderDatePicker" 
-                        Date="{x:Static system:DateTime.Now}"
-                        TextColor="#2C3E50"
-                        BackgroundColor="White"/>
+            <Label Text="Заказ заявки на:"
+                   FontAttributes="Bold"
+                   FontSize="22"
+                   TextColor="#212121" />
+            <DatePicker x:Name="OrderDatePicker"
+                        Date="{x:Static system:DateTime.Now}" />
 
-            <Label Text="Выберите группу товаров:" 
-                   FontAttributes="Italic"
-                   FontSize="20"
-                   TextColor="#2C3E50"/>
+            <Label Text="Выберите группу товаров:"
+                   FontAttributes="Bold"
+                   FontSize="22"
+                   TextColor="#212121"
+                   Margin="0,10,0,0" />
 
             <VerticalStackLayout x:Name="GroupButtonsStackLayout" Spacing="10">
-                <Button Text="Холодное Копчение" 
-                        Clicked="OnGroupButtonClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#3498DB"
-                        TextColor="White"
-                        CornerRadius="10"/>
-                <Button Text="Солёная Продукция" 
-                        Clicked="OnGroupButtonClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#3498DB"
-                        TextColor="White"
-                        CornerRadius="10"/>
-                <Button Text="Вяленая Продукция" 
-                        Clicked="OnGroupButtonClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#3498DB"
-                        TextColor="White"
-                        CornerRadius="10"/>
-                <Button Text="Горячее Копчение" 
-                        Clicked="OnGroupButtonClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#3498DB"
-                        TextColor="White"
-                        CornerRadius="10"/>
-                <Button Text="Пресервы" 
-                        Clicked="OnGroupButtonClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#3498DB"
-                        TextColor="White"
-                        CornerRadius="10"/>
-                <Button Text="Фишки, вакуумная продукция, нарезки" 
-                        Clicked="OnGroupButtonClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#3498DB"
-                        TextColor="White"
-                        CornerRadius="10"/>
-                <Button Text="Креветки и Морепродукты" 
-                        Clicked="OnGroupButtonClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#3498DB"
-                        TextColor="White"
-                        CornerRadius="10"/>
-                <Button Text="Мороженная Продукция" 
-                        Clicked="OnGroupButtonClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#3498DB"
-                        TextColor="White"
-                        CornerRadius="10"/>
-                <Button Text="Расходники (пакеты, перчатки и т.п.)" 
-                        Clicked="OnGroupButtonClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#3498DB"
-                        TextColor="White"
-                        CornerRadius="10"/>
-                <Button Text="Вся продукция" 
-                        Clicked="OnAllProductsButtonClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#2ECC71"
-                        TextColor="White"
-                        CornerRadius="10"/>
+                <Button Text="Холодное Копчение" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
+                <Button Text="Солёная Продукция" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
+                <Button Text="Вяленая Продукция" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
+                <Button Text="Горячее Копчение" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
+                <Button Text="Пресервы" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
+                <Button Text="Фишки, вакуумная продукция, нарезки" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
+                <Button Text="Креветки и Морепродукты" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
+                <Button Text="Мороженная Продукция" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
+                <Button Text="Расходники (пакеты, перчатки и т.п.)" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
+                <Button Text="Вся продукция" Clicked="OnAllProductsButtonClicked" BackgroundColor="#34A853" TextColor="White" />
             </VerticalStackLayout>
 
-            <Label Text="Текущий заказ:" 
-                   FontAttributes="Italic"
-                   FontSize="20"
-                   TextColor="#2C3E50"
-                   Margin="0,20,0,5"/>
+            <Label Text="Текущий заказ:"
+                   FontAttributes="Bold"
+                   FontSize="22"
+                   TextColor="#212121"
+                   Margin="0,20,0,5" />
 
-            <CollectionView x:Name="PreviewCollectionView">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <HorizontalStackLayout Spacing="10" Padding="5" BackgroundColor="#F8F9FA">
-                            <Button Text="Х" 
-                                    Clicked="OnRemoveProductClicked" 
-                                    FontAttributes="Bold" 
-                                    BackgroundColor="#E74C3C" 
-                                    TextColor="White"                      
-                                    WidthRequest="40" 
-                                    HeightRequest="35" 
-                                    CornerRadius="5"
-                                    CommandParameter="{Binding .}"
-                                    IsVisible="{Binding ., Converter={StaticResource RemoveButtonVisibilityConverter}}" />
+            <Border Padding="10">
+                <CollectionView x:Name="PreviewCollectionView" SelectionMode="None">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="5" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="5" ColumnSpacing="10" Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button Text="X"
+                                        Grid.Column="0"
+                                        Clicked="OnRemoveProductClicked"
+                                        Style="{StaticResource RemoveButtonStyle}"
+                                        CommandParameter="{Binding .}"
+                                        IsVisible="{Binding ., Converter={StaticResource RemoveButtonVisibilityConverter}}" />
+                                <Label Text="{Binding .}"
+                                       Grid.Column="1"
+                                       FontSize="16"
+                                       VerticalOptions="Center"
+                                       TextColor="#333333" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Border>
 
-                            <Label Text="{Binding .}" 
-                                   FontSize="Medium" 
-                                   VerticalOptions="Center" 
-                                   TextColor="#2C3E50"/>
-                        </HorizontalStackLayout>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+            <Label Text="Комментарий к заказу:"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   TextColor="#212121"
+                   Margin="0,20,0,5" />
 
-            <Label Text="Комментарий к заказу:" 
-                   FontSize="20" 
-                   FontAttributes="Italic" 
-                   TextColor="#2C3E50"
-                   Margin="0,20,0,5"/>
+            <Border BackgroundColor="White"
+                    Stroke="#E0E0E0"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="10"
+                    Margin="0,5,0,5">
+                <Editor x:Name="CommentEntry"
+                        IsEnabled="False"
+                        Placeholder="Введите комментарий..."
+                        FontAttributes="None"
+                        HeightRequest="120"
+                        TextColor="#333333"
+                        PlaceholderColor="#9E9E9E"
+                        Background="Transparent" />
+            </Border>
 
-            <Editor x:Name="CommentEntry" 
-                    IsEnabled="False" 
-                    Placeholder="Введите комментарий..." 
-                    PlaceholderColor="Gray"
-                    FontAttributes="Italic" 
-                    FontSize="16" 
-                    HeightRequest="100" 
-                    BackgroundColor="White"
-                    TextColor="#2C3E50"/>
+            <Button Text="Завершить заказ"
+                    Clicked="OnFinishOrderClicked"
+                    BackgroundColor="#34A853"
+                    TextColor="White" />
+            <Label Text="Завершённые заказы:"
+                   FontAttributes="Bold"
+                   FontSize="22"
+                   TextColor="#212121"
+                   Margin="0,20,0,5" />
 
-            <Button Text="Завершить заказ" 
-                    Clicked="OnFinishOrderClicked" 
-                    FontAttributes="Bold"  
-                    FontSize="18"
-                    BackgroundColor="#2ECC71"
-                    TextColor="White"
-                    CornerRadius="10"/>
+            <Border Padding="10">
+                <CollectionView x:Name="OrdersCollectionView"
+                                SelectionMode="Multiple">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="5" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <VerticalStackLayout Padding="10,5" BackgroundColor="#F8F9FA" Spacing="5" Margin="0,2" >
+                                <Label Text="{Binding CustomerName}"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       TextColor="#333333"/>
+                                <Label Text="{Binding OrderDate, StringFormat='{}{0:dd.MM.yyyy }'}"
+                                       FontSize="14"
+                                       TextColor="#616161"/>
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Border>
 
-            <Label Text="Завершённые заказы:" 
-                   FontAttributes="Italic"
-                   FontSize="20"
-                   TextColor="#2C3E50"
-                   Margin="0,20,0,5"/>
+            <VerticalStackLayout Spacing="15" Margin="0,10,0,0">
+                <Button Text="Отправить выбранные заказы"
+                        Clicked="OnSendOrdersClicked"
+                        BackgroundColor="#4285F4"
+                        TextColor="White" />
 
-            <CollectionView x:Name="OrdersCollectionView" 
-                            SelectionMode="Multiple" 
-                            BackgroundColor="#F8F9FA">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <HorizontalStackLayout Padding="10,5">
-                            <Label Text="•" 
-                                   FontSize="Medium" 
-                                   TextColor="#2C3E50"/>
-                            <Label Text="{Binding CustomerName}" 
-                                   FontSize="Medium" 
-                                   Margin="5,0,0,0"
-                                   TextColor="#2C3E50"/>
-                        </HorizontalStackLayout>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-
-            <VerticalStackLayout Spacing="10">
-                <Button Text="Отправить выбранные заказы" 
-                        Clicked="OnSendOrdersClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#3498DB"
+                <Button Text="Редактировать выбранный заказ"
+                        Clicked="OnEditOrderClicked"
+                        BackgroundColor="#FBBC04"
+                        TextColor="White" />
+                <Button Text="Удалить выбранные заказы"
+                        Clicked="OnDeleteOrdersClicked"
+                        BackgroundColor="#EA4335"
+                        TextColor="White" />
+                <Button Text="Моя история заказов"
+                        Clicked="OnOrderHistoryClicked"
+                        BackgroundColor="#7B1FA2"
                         TextColor="White"
-                        CornerRadius="10"/>
-
-                <Button Text="Редактировать выбранный заказ" 
-                        Clicked="OnEditOrderClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#F39C12"
-                        TextColor="White"
-                        CornerRadius="10"/>
-
-                <Button Text="Удалить выбранные заказы" 
-                        Clicked="OnDeleteOrdersClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#E74C3C"
-                        TextColor="White"
-                        CornerRadius="10"/>
-
-                <Button Text="Моя история заказов" 
-                        Clicked="OnOrderHistoryClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#9B59B6"
-                        TextColor="White"
-                        CornerRadius="10"
                         IsVisible="{OnPlatform WinUI=true, Default=false}"/>
-
-                <Button Text="Настройки" 
-                        Clicked="OnSettingsClicked" 
-                        FontAttributes="Bold" 
-                        FontSize="18"
-                        BackgroundColor="#34495E"
+                <Button Text="Настройки"
+                        Clicked="OnSettingsClicked"
+                        BackgroundColor="#546E7A"
                         TextColor="White"
-                        CornerRadius="10"
                         IsVisible="{OnPlatform WinUI=true, Default=false}"/>
             </VerticalStackLayout>
 
-            <Label Text="2025г. ©Aquatir" 
-                   FontSize="14" 
-                   HorizontalOptions="Center" 
-                   VerticalOptions="EndAndExpand" 
-                   TextColor="#7F8C8D"
-                   Margin="0,20,0,0" />
+            <Label Text="2025г. ©Aquatir"
+                   FontSize="14"
+                   HorizontalOptions="Center"
+                   VerticalOptions="EndAndExpand"
+                   TextColor="#757575"
+                   Margin="0,30,0,0" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

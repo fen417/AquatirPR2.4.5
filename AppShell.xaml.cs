@@ -12,6 +12,8 @@ namespace Aquatir
             // Регистрация маршрутов для всех платформ
             Routing.RegisterRoute("MainPage", typeof(MainPage));
             Routing.RegisterRoute("PasswordPage", typeof(PasswordPage));
+            Routing.RegisterRoute(nameof(ProductSelectionPage), typeof(ProductSelectionPage));
+            Routing.RegisterRoute(nameof(OrderDetailsPage), typeof(OrderDetailsPage));
             // Добавление содержимого для всех платформ
             if (Items.Count == 0)
             {

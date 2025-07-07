@@ -3,38 +3,148 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Aquatir.OrderHistoryPage"
              Title="Моя история заказов"
-             BackgroundColor="#F4F4F4">
+             BackgroundColor="#F0F2F5">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Color x:Key="PrimaryColor">#4285F4</Color>
+            <Color x:Key="AccentColor">#34A853</Color>
+            <Color x:Key="WarningColor">#FBBC04</Color>
+            <Color x:Key="ErrorColor">#EA4335</Color>
+            <Color x:Key="TextColorPrimary">#212121</Color>
+            <Color x:Key="TextColorSecondary">#424242</Color>
+            <Color x:Key="TextColorHint">#757575</Color>
+            <Color x:Key="CardBackgroundColor">#FFFFFF</Color>
+            <Color x:Key="BorderColorLight">#E0E0E0</Color>
+            <Color x:Key="SelectedListItemColor">#E8F5E9</Color>
+            <Color x:Key="DividerColor">#EEEEEE</Color>
+
+            <Style TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource TextColorSecondary}" />
+                <Setter Property="FontFamily" Value="Roboto" />
+                <Setter Property="LineHeight" Value="1.2" />
+            </Style>
+
+            <Style TargetType="Button">
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="HeightRequest" Value="50" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="VisualStateManager.VisualStateGroups">
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="1" />
+                                </VisualState.Setters>
+                            </VisualState>
+                            <VisualState x:Name="Pressed">
+                                <VisualState.Setters>
+                                    <Setter Property="Opacity" Value="0.8" />
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </Setter>
+            </Style>
+
+            <Style TargetType="Border">
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="Stroke" Value="{StaticResource BorderColorLight}" />
+                <Setter Property="StrokeThickness" Value="1" />
+                <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+                <Setter Property="Padding" Value="15" />
+                <Setter Property="Shadow">
+                    <Setter.Value>
+                        <Shadow Brush="Black" Offset="5,5" Radius="10" Opacity="0.1" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="Entry">
+                <Setter Property="PlaceholderColor" Value="{StaticResource TextColorHint}" />
+                <Setter Property="BackgroundColor" Value="Transparent" />
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Keyboard" Value="Text" />
+            </Style>
+
+            <Style TargetType="Picker">
+                <Setter Property="TitleColor" Value="{StaticResource TextColorHint}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Margin" Value="0,5,0,5" />
+            </Style>
+
+            <Style TargetType="DatePicker">
+                <Setter Property="TextColor" Value="{StaticResource TextColorPrimary}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource CardBackgroundColor}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="Margin" Value="0,5,0,5" />
+            </Style>
+
+            <Style TargetType="CheckBox">
+                <Setter Property="Color" Value="{StaticResource PrimaryColor}" />
+            </Style>
+
+            <Style x:Key="RemoveButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource ErrorColor}" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="WidthRequest" Value="35" />
+                <Setter Property="HeightRequest" Value="35" />
+                <Setter Property="CornerRadius" Value="17" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
     <ContentPage.ToolbarItems>
-        <!-- Кнопка для перезагрузки страницы -->
         <ToolbarItem Text="Обновить"
                      Clicked="OnRefreshButtonClicked"
                      IconImageSource="refresh_icon.png" />
     </ContentPage.ToolbarItems>
 
-    <StackLayout VerticalOptions="FillAndExpand">
-        <!-- Список заказов -->
-        <ListView x:Name="OrdersListView" 
-                  ItemTapped="OnOrderTapped"
-                  Margin="10,0,0,0">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <TextCell Text="{Binding CustomerName}" 
-                              Detail="{Binding FormattedOrderDetails}" 
-                              TextColor="#2C3E50"
-                              DetailColor="#7F8C8D"/>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+    <Grid RowDefinitions="*,Auto"
+          Padding="10"
+          RowSpacing="10">
 
-        <!-- Кнопка очистки истории заказов -->
+        <CollectionView x:Name="OrdersCollectionView"
+                        Grid.Row="0"
+                        SelectionMode="Single"
+                        SelectionChanged="OnOrderSelected"
+                        ItemsLayout="VerticalList"
+                        VerticalOptions="FillAndExpand">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="0,5">
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="{Binding CustomerName}" 
+                                   TextColor="{StaticResource TextColorPrimary}" 
+                                   FontSize="16" 
+                                   FontAttributes="Bold"/>
+                            <Label Text="{Binding FormattedOrderDetails}" 
+                                   TextColor="{StaticResource TextColorSecondary}" 
+                                   FontSize="14"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
         <Button Text="Очистить историю заказов" 
-                VerticalOptions="End"
+                Grid.Row="1"
                 Clicked="OnClearOrderHistoryClicked"
-                Margin="10,10,10,10"
-                BackgroundColor="#E74C3C"
+                BackgroundColor="#E74C3C" 
                 TextColor="White"
                 CornerRadius="10"
                 FontAttributes="Bold" 
-                FontSize="18"/>
-    </StackLayout>
+                FontSize="18"
+                HeightRequest="50"/>
+    </Grid>
 </ContentPage>

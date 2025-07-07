@@ -12,7 +12,6 @@ namespace Aquatir
 
         public DatabaseService()
         {
-            Console.WriteLine("[DatabaseService] Конструктор вызван.");
             _initializationTask = InitializeDatabaseAsync();
         }
 
@@ -21,24 +20,16 @@ namespace Aquatir
             try
             {
                 string databasePath = Path.Combine(FileSystem.AppDataDirectory, "aquatir.db");
-                Console.WriteLine($"[DatabaseService] Путь к базе данных: {databasePath}");
 
                 _database = new SQLiteAsyncConnection(databasePath,
                     SQLiteOpenFlags.ReadWrite |
                     SQLiteOpenFlags.Create |
                     SQLiteOpenFlags.FullMutex);
 
-                Console.WriteLine("[DatabaseService] Подключение к базе данных установлено.");
 
-                // Create tables first, before any querying
                 await _database.CreateTableAsync<ProductGroup>();
                 await _database.CreateTableAsync<ProductItem>();
-
-                Console.WriteLine("[DatabaseService] Таблицы базы данных созданы.");
-
-                // Optional: Check if tables exist and are empty
                 var groupCount = await _database.Table<ProductGroup>().CountAsync();
-                Console.WriteLine($"[DatabaseService] Количество существующих групп: {groupCount}");
             }
             catch (Exception ex)
             {
@@ -49,7 +40,6 @@ namespace Aquatir
         }
         public async Task EnsureInitializedAsync()
         {
-            // Ожидание завершения инициализации
             await _initializationTask;
         }
 
@@ -137,7 +127,6 @@ namespace Aquatir
         public int GroupId { get; set; }
         public string DisplayName => RemoveUnitFromName(Name);
 
-        // Добавляем свойство DisplayQuantity
         public string DisplayQuantity
         {
             get

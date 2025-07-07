@@ -24,16 +24,13 @@ namespace Aquatir
 
         public MainPage()
         {
-            Console.WriteLine("[MainPage] Конструктор вызван.");
             InitializeComponent();
             OrderDatePicker.Date = DateTime.Today;
-            Console.WriteLine("[MainPage] Инициализация компонентов завершена.");
             Connectivity.Current.ConnectivityChanged += Current_ConnectivityChanged;
-
-            // Логирование инициализации данных
-            Console.WriteLine("[MainPage] Инициализация данных...");
+#if ANDROID
             ScheduleWeeklyNotification();
             CheckMissedNotification();
+#endif
             bool isAuthorizationDisabled = Preferences.Get("AuthorizationDisabled", false);
             Preferences.Set("AuthorizationDisabled", false);
 
@@ -70,7 +67,7 @@ namespace Aquatir
             _customersByDirection = new Dictionary<string, List<string>>
     {
         { "Тирасполь", new List<string> {
-            "Агора Бородино", "Агора Зелинского", "Агора Краснодонская", "Агора Юности", "Агора Чкалова",
+            "Агора Бородино", "Агора Зелинского", "Агора Краснодонская", "Агора Сакриера", "Агора Юности", "Агора Чкалова",
             "БМК - 2", "БМК - 31", "Динисалл Каховская", "Динисалл Краснодонская", "Динисалл Палома",
             "Динисалл Фортуна", "И/П Насиковский", "И/П Онищенко", "И/П Сырбул", "И/П Хаджи", "И/П Кобзарь",
             "ООО Миатита", "ООО Наполи (р-н Джорджия)", "Сигл Комета", "Сигл Ларионова", "У Семёныча", "Фагот",
@@ -87,7 +84,6 @@ namespace Aquatir
     };
 
             OrdersCollectionView.ItemsSource = _orders;
-            Console.WriteLine("[MainPage] Инициализация данных завершена.");
         }
 
         private void ScheduleWeeklyNotification()
@@ -103,8 +99,9 @@ namespace Aquatir
                     RepeatType = NotificationRepeat.Weekly
                 }
             };
-
+#if ANDROID
             LocalNotificationCenter.Current.Show(notification);
+#endif
         }
 
         private DateTime GetNextMondayAt5PM()
@@ -166,14 +163,13 @@ namespace Aquatir
         {
             Dispatcher.Dispatch(async () =>
             {
+
                 if (e.NetworkAccess != NetworkAccess.Internet)
                 {
-                    Console.WriteLine("[MainPage] Соединение с интернетом потеряно.");
                     await DisplayAlert("Предупреждение", "Интернет-соединение отсутствует. Некоторые функции могут быть недоступны.", "OK");
                 }
                 else
                 {
-                    Console.WriteLine("[MainPage] Соединение с интернетом восстановлено.");
                 }
             });
         }
@@ -212,7 +208,6 @@ namespace Aquatir
             }
             else
             {
-                Console.WriteLine("ProductSelectionPage не активен. Невозможно обновить продукты.");
             }
         }
 
@@ -274,7 +269,6 @@ namespace Aquatir
                 var current = Connectivity.Current;
                 if (current.NetworkAccess != NetworkAccess.Internet)
                 {
-                    Console.WriteLine("[MainPage] Нет подключения к интернету. Проверка новых продуктов отменена.");
                     return;
                 }
 
@@ -301,8 +295,6 @@ namespace Aquatir
             }
             catch (Exception ex)
             {
-                // Логируем ошибку, но не пробрасываем её дальше
-                Console.WriteLine($"[MainPage] Ошибка при проверке новых продуктов: {ex.Message}");
             }
         }
         private async void OnSendOrdersClicked(object sender, EventArgs e)
@@ -353,85 +345,59 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
         private void SendOrdersByEmail(List<Order> selectedOrders)
         {
             var groupOrder = ProductCache.CachedProducts.Keys.ToList();
-            var ordersByDate = selectedOrders.GroupBy(o => o.OrderDate).ToList();
+            var customerNames = selectedOrders.Select(o => o.CustomerName).Distinct();
+            var allDates = selectedOrders.Select(o => o.OrderDate.ToString("dd.MM.yyyy")).Distinct();
+            bool hasAdditionalOrder = selectedOrders.Any(o => o.IsAdditionalOrder);
+            string additionalOrderText = hasAdditionalOrder ? " (доп. заявка)" : "";
+            string orderDateText = string.Join(", ", allDates);
 
-            foreach (var orderGroup in ordersByDate)
+            // Обработка всех заказов
+            var processedOrders = new List<ProcessedOrder>();
+
+            foreach (var order in selectedOrders)
             {
-                var customerNames = orderGroup.Select(o => o.CustomerName).Distinct();
-                string orderDateText = orderGroup.Key.ToString("dd.MM.yyyy");
-                bool hasAdditionalOrder = orderGroup.Any(o => o.IsAdditionalOrder);
-                string additionalOrderText = hasAdditionalOrder ? " (доп. заявка)" : "";
+                var regularProducts = new List<ProductItem>();
+                var frozenProducts = new List<ProductItem>();
+                var seafoodProducts = new List<ProductItem>();
 
-                // Разделяем продукты по категориям для каждого заказа
-                var processedOrders = new List<ProcessedOrder>();
-
-                foreach (var order in orderGroup)
+                foreach (var product in order.Products)
                 {
-                    var regularProducts = new List<ProductItem>();
-                    var frozenProducts = new List<ProductItem>();
-                    var seafoodProducts = new List<ProductItem>();
+                    string productNameLower = product.Name.ToLower();
 
-                    foreach (var product in order.Products)
+                    if (productNameLower.Contains("морожен") ||
+                        productNameLower.Contains("ухи") ||
+                        productNameLower.Contains("уха") ||
+                        productNameLower.Contains("печень") ||
+                        productNameLower.Contains("спецразделка"))
                     {
-                        string productNameLower = product.Name.ToLower();
-
-                        // Проверяем на мороженую продукцию
-                        if (productNameLower.Contains("морожен") ||
-                            productNameLower.Contains("ухи") ||
-                            productNameLower.Contains("уха") ||
-                            productNameLower.Contains("печень") ||
-                            productNameLower.Contains("спецразделка"))
-                        {
-                            frozenProducts.Add(product);
-                        }
-                        // Проверяем на морепродукты
-                        else if (productNameLower.Contains("креветка") ||
-                                 productNameLower.Contains("кальмар") ||
-                                 productNameLower.Contains("мясо мидий") ||
-                                 productNameLower.Contains("alfredo") ||
-                                 productNameLower.Contains("осьминог"))
-                        {
-                            seafoodProducts.Add(product);
-                        }
-                        else
-                        {
-                            regularProducts.Add(product);
-                        }
+                        frozenProducts.Add(product);
                     }
-
-                    processedOrders.Add(new ProcessedOrder
+                    else if (productNameLower.Contains("креветка") ||
+                             productNameLower.Contains("кальмар") ||
+                             productNameLower.Contains("мясо мидий") ||
+                             productNameLower.Contains("alfredo") ||
+                             productNameLower.Contains("морепродукты") ||
+                             productNameLower.Contains("осьминог"))
                     {
-                        OriginalOrder = order,
-                        RegularProducts = regularProducts,
-                        FrozenProducts = frozenProducts,
-                        SeafoodProducts = seafoodProducts
-                    });
+                        seafoodProducts.Add(product);
+                    }
+                    else
+                    {
+                        regularProducts.Add(product);
+                    }
                 }
 
-                // Отправляем основное письмо (если есть обычные продукты)
-                var ordersWithRegularProducts = processedOrders.Where(po => po.RegularProducts.Any()).ToList();
-                if (ordersWithRegularProducts.Any())
+                processedOrders.Add(new ProcessedOrder
                 {
-                    var regularCustomerNames = ordersWithRegularProducts.Select(po => po.OriginalOrder.CustomerName).Distinct();
-                    SendEmailForProductCategory(ordersWithRegularProducts, regularCustomerNames, orderDateText, additionalOrderText, "", groupOrder);
-                }
-
-                // Отправляем письмо с мороженой продукцией
-                var ordersWithFrozenProducts = processedOrders.Where(po => po.FrozenProducts.Any()).ToList();
-                if (ordersWithFrozenProducts.Any())
-                {
-                    var frozenCustomerNames = ordersWithFrozenProducts.Select(po => po.OriginalOrder.CustomerName).Distinct();
-                    SendEmailForProductCategory(ordersWithFrozenProducts, frozenCustomerNames, orderDateText, additionalOrderText, " [МОРОЖЕННАЯ ПРОДУКЦИЯ]", groupOrder);
-                }
-
-                // Отправляем письмо с морепродуктами
-                var ordersWithSeafoodProducts = processedOrders.Where(po => po.SeafoodProducts.Any()).ToList();
-                if (ordersWithSeafoodProducts.Any())
-                {
-                    var seafoodCustomerNames = ordersWithSeafoodProducts.Select(po => po.OriginalOrder.CustomerName).Distinct();
-                    SendEmailForProductCategory(ordersWithSeafoodProducts, seafoodCustomerNames, orderDateText, additionalOrderText, " [КРЕВЕТКА]", groupOrder);
-                }
+                    OriginalOrder = order,
+                    RegularProducts = regularProducts,
+                    FrozenProducts = frozenProducts,
+                    SeafoodProducts = seafoodProducts
+                });
             }
+
+            // Отправляем одно письмо с полной разбивкой
+            SendEmailForProductCategory(processedOrders, customerNames, orderDateText, additionalOrderText, "", groupOrder);
         }
 
 
@@ -442,60 +408,52 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             message.From.Add(new MailboxAddress("Aquatir", "rep.1958@mail.ru"));
             message.To.Add(new MailboxAddress("Получатель", "fen559256@gmail.com"));
 
-            message.Subject = $"Заявка от {string.Join(", ", customerNames)}{categoryTag}{additionalOrderText} на {orderDateText}";
+            message.Subject = $"Заявка от {string.Join(", ", customerNames)}{additionalOrderText} на {orderDateText}";
 
             var bodyBuilder = new BodyBuilder();
 
             foreach (var processedOrder in processedOrders)
             {
                 var order = processedOrder.OriginalOrder;
-                var productsToShow = new List<ProductItem>();
-
-                // Выбираем продукты в зависимости от категории
-                if (categoryTag.Contains("МОРОЖЕННАЯ"))
-                {
-                    productsToShow = processedOrder.FrozenProducts;
-                }
-                else if (categoryTag.Contains("КРЕВЕТКА"))
-                {
-                    productsToShow = processedOrder.SeafoodProducts;
-                }
-                else
-                {
-                    productsToShow = processedOrder.RegularProducts;
-                }
-
-                // Если нет продуктов для этой категории, пропускаем
-                if (!productsToShow.Any()) continue;
-
                 var directionText = !string.IsNullOrWhiteSpace(order.Direction) ? order.Direction : "Не указано";
-                var bodyText = $"<div><b><u><font size='5'>{order.CustomerName} ({directionText}).</font><font size='3'> Заявка на {orderDateText}</font></u></b></div>";
+                var orderDate = order.OrderDate.ToString("dd.MM.yyyy");
 
-                var sortedProducts = productsToShow
-                    .OrderBy(product => GetProductGroupIndex(RemoveColorTags(product.Name), groupOrder))
-                    .ThenBy(product => RemoveColorTags(product.Name), StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(product => product.Name, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+                var bodyText = $"<div><b><u><font size='5'>{order.CustomerName} ({directionText}).</font><font size='3'> Заявка на {orderDate}</font></u></b></div>";
 
-                // Разделение на основной список и горячее копчение
-                var hotSmokingProducts = sortedProducts
-                    .Where(p => p.Name.Contains("г/к", StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-                var regularProducts = sortedProducts.Except(hotSmokingProducts).ToList();
-
-                foreach (var product in regularProducts)
+                void AppendProductGroup(List<ProductItem> products, string groupTitle)
                 {
-                    bodyText += $"<div> <font size='3'>{product.DisplayName} - {product.DisplayQuantity}</font></div>";
-                }
-
-                if (hotSmokingProducts.Any())
-                {
-                    bodyText += "<div><br/><b> <font size='3'>Горячее копчение:</font></b></div>";
-                    foreach (var product in hotSmokingProducts)
+                    if (products.Any())
                     {
-                        bodyText += $"<div> <font size='3'>{product.DisplayName} - {product.DisplayQuantity}</font></div>";
+                        if (!string.IsNullOrEmpty(groupTitle))
+                        {
+                            bodyText += $"<div><br/><b><font size='3'>{groupTitle}</font></b></div>";
+                        }
+
+                        var sorted = products
+                            .OrderBy(product => GetProductGroupIndex(RemoveColorTags(product.Name), groupOrder))
+                            .ThenBy(product => RemoveColorTags(product.Name), StringComparer.OrdinalIgnoreCase)
+                            .ThenBy(product => product.Name, StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+
+                        var hotSmoking = sorted.Where(p => p.Name.Contains("г/к", StringComparison.OrdinalIgnoreCase)).ToList();
+                        var regular = sorted.Except(hotSmoking).ToList();
+
+                        foreach (var p in regular)
+                            bodyText += $"<div><font size='3'>{p.DisplayName} - {p.DisplayQuantity}</font></div>";
+
+                        if (hotSmoking.Any())
+                        {
+                            bodyText += "<div><br/><b><font size='3'>Горячее копчение:</font></b></div>";
+                            foreach (var p in hotSmoking)
+                                bodyText += $"<div><font size='3'>{p.DisplayName} - {p.DisplayQuantity}</font></div>";
+                        }
                     }
                 }
+
+
+                AppendProductGroup(processedOrder.RegularProducts, null);
+                AppendProductGroup(processedOrder.FrozenProducts, "Мороженая продукция:");
+                AppendProductGroup(processedOrder.SeafoodProducts, "Креветка:");
 
                 if (!string.IsNullOrWhiteSpace(order.Comment))
                 {
@@ -576,7 +534,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            Console.WriteLine("[MainPage] Страница отображается.");
             var notificationManager = new NotificationManager();
             await notificationManager.CheckAndShowNotificationsAsync();
             IsDataLoaded = false;
@@ -587,24 +544,20 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 // Если база данных уже загружена, то просто обновляем UI
                 if (AppState.IsDatabaseLoaded && ProductCache.CachedProducts != null && ProductCache.CachedProducts.Count > 0)
                 {
-                    Console.WriteLine("[MainPage] База данных уже загружена");
                     IsDataLoaded = true;
                 }
                 else
                 {
-                    Console.WriteLine("[MainPage] Ожидание загрузки базы данных...");
 
                     // Дать шанс базе данных загрузиться из App.xaml.cs
                     bool isLoaded = await Task.WhenAny(App.DatabaseLoadedTcs.Task, Task.Delay(3000)) == App.DatabaseLoadedTcs.Task;
 
                     if (isLoaded && await App.DatabaseLoadedTcs.Task)
                     {
-                        Console.WriteLine("[MainPage] База данных успешно загружена в App.xaml.cs");
                         IsDataLoaded = true;
                     }
                     else
                     {
-                        Console.WriteLine("[MainPage] Загрузка в App не удалась, пробуем загрузить базу данных самостоятельно...");
                         bool success = await ValidateProductCache();
                         IsDataLoaded = success;
                     }
@@ -618,7 +571,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[MainPage] Ошибка при загрузке данных: {ex.Message}");
                 await DisplayAlert("Предупреждение", "Не удалось загрузить данные из-за проблем с сетью. Некоторые функции могут быть недоступны.", "OK");
                 IsDataLoaded = true;
                 UpdateGroupButtonsState();
@@ -643,12 +595,10 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                     {
                         var restoredOrder = JsonConvert.DeserializeObject<Order>(currentOrderJson);
                         _currentOrder = restoredOrder;
-                        Console.WriteLine($"[MainPage] Заказ восстановлен: {restoredOrder.OrderID}");
                     }
                     catch (Exception ex)
                     {
                         _currentOrder = new Order();
-                        Console.WriteLine($"[MainPage] Ошибка при восстановлении заказа: {ex.Message}");
                     }
                 }
             }
@@ -660,7 +610,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             {
                 if (ProductCache.CachedProducts != null && ProductCache.CachedProducts.Count > 0)
                 {
-                    Console.WriteLine("[MainPage] Продукция загружена");
                     AppState.IsDatabaseLoaded = true; // Установим флаг, что данные загружены
                     return true;
                 }
@@ -669,15 +618,12 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                     var current = Connectivity.Current;
                     if (current.NetworkAccess != NetworkAccess.Internet)
                     {
-                        Console.WriteLine("[MainPage] Нет подключения к интернету. Продукция не загружена.");
                         await DisplayAlert("Предупреждение", "Нет подключения к интернету. Продукты не загружены.", "OK");
                         return false;
                     }
                     else
                     {
-                        Console.WriteLine("[MainPage] Продукция не загружена, загружаем...");
 
-                        // Если данные не были загружены в App.xaml.cs, загружаем их здесь
                         var databaseService = new DatabaseService();
                         var productGroups = await databaseService.LoadProductGroupsAsync();
 
@@ -685,7 +631,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                         {
                             ProductCache.CachedProducts = productGroups;
                             AppState.IsDatabaseLoaded = true;
-                            Console.WriteLine("[MainPage] Продукция успешно загружена");
                             return true;
                         }
                         else
@@ -698,7 +643,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[MainPage] Ошибка при проверке кэша продукции: {ex.Message}");
                 return false;
             }
         }
@@ -714,7 +658,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка при сохранении текущего заказа: {ex.Message}");
             }
         }
 
@@ -758,19 +701,17 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                     {
                         Name = productName,
                         Quantity = quantity,
-                        PricePerKg = productName.EndsWith("ВЕС.") ? GetProductPrice(productName, "Kg") : 0,
-                        PricePerUnit = productName.EndsWith("УП.") ? GetProductPrice(productName, "Unit") : 0,
-                        PricePerCont = productName.EndsWith("КОНТ.") ? GetProductPrice(productName, "Cont") : 0,
-                        PricePerPiece = productName.EndsWith("ШТ.") ? GetProductPrice(productName, "Piece") : 0,
-                        PricePerVedro = productName.EndsWith("В.") ? GetProductPrice(productName, "Vedro") : 0
+                        // PricePerKg = productName.EndsWith("ВЕС.") ? GetProductPrice(productName, "Kg") : 0,
+                        // PricePerUnit = productName.EndsWith("УП.") ? GetProductPrice(productName, "Unit") : 0,
+                        // PricePerCont = productName.EndsWith("КОНТ.") ? GetProductPrice(productName, "Cont") : 0,
+                        // PricePerPiece = productName.EndsWith("ШТ.") ? GetProductPrice(productName, "Piece") : 0,
+                        // PricePerVedro = productName.EndsWith("В.") ? GetProductPrice(productName, "Vedro") : 0
                     };
 
                     _currentOrder.Products.Add(productItem);
                 }
 
                 Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
-                Console.WriteLine($"Product added: {productName}, quantity: {quantity}");
-                Console.WriteLine($"Date saved: {OrderDatePicker.Date}");
 
                 UpdatePreview();
                 SaveCurrentOrder();
@@ -798,7 +739,7 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
 
         private static readonly Dictionary<string, ProductItem> _productPriceCache = new Dictionary<string, ProductItem>();
 
-        private decimal GetProductPrice(string productName, string priceType)
+       /* private decimal GetProductPrice(string productName, string priceType)
         {
             if (_productPriceCache.TryGetValue(productName, out var product))
             {
@@ -831,7 +772,7 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 }
             }
             return 0;
-        }
+        } */
 
         private async void OnGroupButtonClicked(object sender, EventArgs e)
         {
@@ -977,26 +918,26 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
         private void UpdatePreview()
         {
             var productDescriptions = new List<string>();
-            decimal totalAmount = 0;
+           // decimal totalAmount = 0;
 
             foreach (var product in _currentOrder.Products)
             {
                 productDescriptions.Add(FormatProductString(product));
 
-                decimal price = 0;
+               /* decimal price = 0;
                 if (product.Name.EndsWith("ВЕС.")) price = product.PricePerKg;
                 else if (product.Name.EndsWith("УП.")) price = product.PricePerUnit;
                 else if (product.Name.EndsWith("КОНТ.")) price = product.PricePerCont;
                 else if (product.Name.EndsWith("ШТ.")) price = product.PricePerPiece;
                 else if (product.Name.EndsWith("В.")) price = product.PricePerVedro;
 
-                totalAmount += product.Quantity * price;
+                totalAmount += product.Quantity * price; */
             }
 
-            if (Preferences.Get("ShowPriceEnabled", false))
+           /* if (Preferences.Get("ShowPriceEnabled", false))
             {
                 productDescriptions.Add($"Сумма заказа: {totalAmount:N2} руб.");
-            }
+            } */
 
             PreviewCollectionView.ItemsSource = productDescriptions;
         }
@@ -1039,10 +980,11 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 ? product.Quantity.ToString("0")
                 : product.Quantity.ToString("0.0#");
 
-            string priceInfo = "";
+            /* string priceInfo = "";
             bool showPrice = Preferences.Get("ShowPriceEnabled", false);
+            */
 
-            if (showPrice)
+            /* if (showPrice)
             {
                 var priceMapping = new Dictionary<string, decimal>
                 {
@@ -1057,9 +999,9 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 {
                     priceInfo = $" ({product.Quantity * price:N2} руб.)";
                 }
-            }
+            } */
 
-            return $"{productName} - {formattedQuantity} {unit}{priceInfo}";
+            return $"{productName} - {formattedQuantity} {unit}";
         }
 
         private string RemoveColorTags(string input)
