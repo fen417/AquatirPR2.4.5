@@ -92,13 +92,10 @@ namespace Aquatir
         {
             try
             {
-                // Загружаем продукты из кэша. Если кэш пуст, то данные будут загружены из JSON.
-                // Предполагается, что ProductCache.CachedProducts уже содержит или может загрузить данные из productsCOLOR.json
+               
                 if (ProductCache.CachedProducts == null || ProductCache.CachedProducts.Count == 0)
                 {
-                    // Это место, где вы должны загрузить ваш productsCOLOR.json
-                    // Если у вас есть ProductCache, который это делает, убедитесь, что он вызван.
-                    // Для примера, я добавлю код для загрузки, если ProductCache не делает это автоматически
+                   
                     using var stream = await FileSystem.OpenAppPackageFileAsync("productsCOLOR.json");
                     using var reader = new StreamReader(stream);
                     var jsonContent = await reader.ReadToEndAsync();
@@ -110,7 +107,6 @@ namespace Aquatir
                 {
                     foreach (var product in group)
                     {
-                        // Нормализуем имя продукта для поиска и сохраняем его
                         product.NormalizedNameForSearch = NormalizeTextForSearch(product.Name, isProductNameFromList: true);
                         _allAvailableProducts.Add(product);
                     }
@@ -160,9 +156,13 @@ namespace Aquatir
                                 .Replace("штуки", "шт")
                                 .Replace("штук", "шт")
                                 .Replace("ведро", "в")
+                                .Replace("ведра", "в")
+                                .Replace("вёдер", "в")
                                 .Replace("упаковка", "уп")
                                 .Replace("упаковки", "уп")
                                 .Replace("упаковок", "уп")
+                                .Replace("коробки", "уп")
+                                .Replace("коробик", "уп")
                                 .Replace("контейнер", "конт")
                                 .Replace("контейнера", "конт")
                                 .Replace("контейнеров", "конт");
@@ -197,8 +197,10 @@ namespace Aquatir
                     return;
                 }
 
-                // Можно добавить индикатор, что приложение слушает
-                // Например, Label SpeechIndicator с IsVisible=true и текстом "Слушаю..."
+                // *** ДОБАВЬТЕ ЭТИ СТРОКИ ***
+                SpeechIndicator.IsVisible = true; // Показать индикатор
+                SpeechIndicator.Text = "Слушаю..."; // Установить текст индикатора
+                                                    // *************************
 
                 await DisplayAlert("Голосовой ввод", "Говорите, чтобы добавить продукты. Например: 'я хочу кильку хк 2 кило, ведро мойвы спец посола, 10 кг мороженого хека'", "OK");
 
@@ -222,7 +224,7 @@ namespace Aquatir
                 }
                 finally
                 {
-                    // Убрать индикатор, когда распознавание закончилось
+                    SpeechIndicator.IsVisible = false;
                 }
 
 
@@ -240,7 +242,6 @@ namespace Aquatir
                 await DisplayAlert("Ошибка", $"Произошла ошибка при голосовом вводе: {ex.Message}", "OK");
             }
         }
-
         private void ParseAndAddProducts(string voiceInput)
         {
             Debug.WriteLine($"Исходный голосовой ввод: {voiceInput}");

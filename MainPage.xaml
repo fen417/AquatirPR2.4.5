@@ -183,12 +183,20 @@
                 <Button Text="Вяленая Продукция" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
                 <Button Text="Горячее Копчение" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
                 <Button Text="Пресервы" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
-                <Button Text="Фишки, вакуумная продукция, нарезки" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" FontSize="14" />
+                <Button Text="Фишки, вакуумная продукция, нарезки" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" FontSize="15" />
                 <Button Text="Креветки и Морепродукты" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
                 <Button Text="Мороженная Продукция" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
                 <Button Text="Расходники (пакеты, перчатки и т.п.)" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" FontSize="16" />
                 <Button Text="Вся продукция" Clicked="OnAllProductsButtonClicked" BackgroundColor="#34A853" TextColor="White" />
                 <Button Text="Голосовой Ввод" Clicked="OnVoiceInputClicked" BackgroundColor="YellowGreen" TextColor="White" />
+
+                <Label x:Name="SpeechIndicator"
+                       Text="Слушаю..."
+                       IsVisible="False"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       FontSize="Medium"
+                       TextColor="#4285F4" Margin="0,10,0,0" />
             </VerticalStackLayout>
 
             <Label Text="Текущий заказ:"
@@ -216,10 +224,10 @@
                                         CommandParameter="{Binding .}"
                                         IsVisible="{Binding ., Converter={StaticResource RemoveButtonVisibilityConverter}}" />
                                 <Label Text="{Binding .}"
-                                       Grid.Column="1"
-                                       FontSize="16"
-                                       VerticalOptions="Center"
-                                       TextColor="#333333" />
+                                        Grid.Column="1"
+                                        FontSize="16"
+                                        VerticalOptions="Center"
+                                        TextColor="#333333" />
                             </Grid>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
@@ -268,12 +276,12 @@
                         <DataTemplate>
                             <VerticalStackLayout Padding="10,5" BackgroundColor="#F8F9FA" Spacing="5" Margin="0,2" >
                                 <Label Text="{Binding CustomerName}"
-                                       FontSize="18"
-                                       FontAttributes="Bold"
-                                       TextColor="#333333"/>
+                                        FontSize="18"
+                                        FontAttributes="Bold"
+                                        TextColor="#333333"/>
                                 <Label Text="{Binding OrderDate, StringFormat='{}{0:dd.MM.yyyy }'}"
-                                       FontSize="14"
-                                       TextColor="#616161"/>
+                                        FontSize="14"
+                                        TextColor="#616161"/>
                             </VerticalStackLayout>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
