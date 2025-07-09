@@ -128,52 +128,61 @@ namespace Aquatir
 
             string normalizedText = text.ToLowerInvariant();
 
-            // 1. Стандартизация сокращений
             normalizedText = Regex.Replace(normalizedText, @"\bхк\b", "х/к");
             normalizedText = Regex.Replace(normalizedText, @"\bгк\b", "г/к");
             normalizedText = Regex.Replace(normalizedText, @"\bслабосол\b|\bслабосоленая\b", "с/с");
             normalizedText = Regex.Replace(normalizedText, @"\bспецпосол\b|\bспец\b", "сп/п");
-            normalizedText = Regex.Replace(normalizedText, @"\bпряная\b|\bпрянп\b", "п/п"); // Добавьте прянп, если это возможное искажение
+            normalizedText = Regex.Replace(normalizedText, @"\bпряная\b|\bпрянп\b", "п/п");
+            normalizedText = normalizedText
+                .Replace("пресервы", "пр-вы")
+                .Replace("пресерв", "пр-вы")
+                .Replace("сельдь", "с-дь")
+                .Replace("скумбрия", "ск.")
+                .Replace("скумбр", "ск.")
+                .Replace("осётр", "ос.")
+                .Replace("осетр", "ос.")
+                .Replace("лосось", "лос.")
+                .Replace("сёмга", "семга")  
+                .Replace("семга", "сёмга"); 
 
-            // 2. Стандартизация единиц измерения для поиска
-            // Для имен продуктов из списка, мы хотим сохранить их как они есть (ВЕС., УП., ШТ. и т.д.)
             if (isProductNameFromList)
             {
                 normalizedText = normalizedText
-                                .Replace("вес.", "кг") // Нормализуем для поиска, чтобы "вес." в продукте соответствовал "кг" в речи
-                                .Replace("уп.", "уп") // Убираем точку для более простого сопоставления с речью
-                                .Replace("шт.", "шт")
-                                .Replace("в.", "в")
-                                .Replace("конт.", "конт");
+                    .Replace("вес.", "кг")
+                    .Replace("уп.", "уп")
+                    .Replace("шт.", "шт")
+                    .Replace("в.", "в")
+                    .Replace("конт.", "конт");
             }
-            else // Для распознанного речевого ввода
+            else
             {
                 normalizedText = normalizedText
-                                .Replace("килограмма", "кг")
-                                .Replace("килограмм", "кг")
-                                .Replace("кило", "кг")
-                                .Replace("штука", "шт")
-                                .Replace("штуки", "шт")
-                                .Replace("штук", "шт")
-                                .Replace("ведро", "в")
-                                .Replace("ведра", "в")
-                                .Replace("вёдер", "в")
-                                .Replace("упаковка", "уп")
-                                .Replace("упаковки", "уп")
-                                .Replace("упаковок", "уп")
-                                .Replace("коробки", "уп")
-                                .Replace("коробик", "уп")
-                                .Replace("контейнер", "конт")
-                                .Replace("контейнера", "конт")
-                                .Replace("контейнеров", "конт");
-                // Дополнительно удаляем общие слова, которые не являются частью названия продукта
-                normalizedText = Regex.Replace(normalizedText, @"\bрыба\b|\bхочу\b|\bмне\b|\bдобавь\b|\bпожалуйста\b", "").Trim();
+                    .Replace("килограмма", "кг")
+                    .Replace("килограмм", "кг")
+                    .Replace("кило", "кг")
+                    .Replace("штука", "шт")
+                    .Replace("штуки", "шт")
+                    .Replace("штук", "шт")
+                    .Replace("ведро", "в")
+                    .Replace("ведра", "в")
+                    .Replace("вёдер", "в")
+                    .Replace("упаковка", "уп")
+                    .Replace("упаковки", "уп")
+                    .Replace("упаковок", "уп")
+                    .Replace("коробки", "уп")
+                    .Replace("коробик", "уп")
+                    .Replace("контейнер", "конт")
+                    .Replace("контейнера", "конт")
+                    .Replace("контейнеров", "конт");
+
+                normalizedText = Regex.Replace(normalizedText, @"\b\d{2}\s*/\s*\d{2}\b", "");
+                normalizedText = Regex.Replace(normalizedText, @"\b\d{2}\s+на\s+\d{2}\b", "");
+                normalizedText = Regex.Replace(normalizedText, @"\b\d{2}\s+\d{2}\b", "");
+                normalizedText = Regex.Replace(normalizedText, @"\b[0-9]+([.,][0-9]+)?\s*(кг|грамм|гр|л)\b", "");
+                normalizedText = Regex.Replace(normalizedText, @"\bрыба\b|\bхочу\b|\bмне\b|\bдобавь\b|\bпожалуйста\b", "");
             }
 
-            // Удаляем возможные теги цвета, если они есть (они не нужны для поиска)
             normalizedText = Regex.Replace(normalizedText, @"<\/?color.*?>", string.Empty);
-
-            // Очистка лишних пробелов
             normalizedText = Regex.Replace(normalizedText, @"\s+", " ").Trim();
 
             return normalizedText;
@@ -197,10 +206,9 @@ namespace Aquatir
                     return;
                 }
 
-                // *** ДОБАВЬТЕ ЭТИ СТРОКИ ***
-                SpeechIndicator.IsVisible = true; // Показать индикатор
-                SpeechIndicator.Text = "Слушаю..."; // Установить текст индикатора
-                                                    // *************************
+                SpeechIndicator.IsVisible = true;
+                SpeechIndicator.Text = "Слушаю..."; 
+                                                    
 
                 await DisplayAlert("Голосовой ввод", "Говорите, чтобы добавить продукты. Например: 'я хочу кильку хк 2 кило, ведро мойвы спец посола, 10 кг мороженого хека'", "OK");
 
