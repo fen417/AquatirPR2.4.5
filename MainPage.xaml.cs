@@ -131,20 +131,24 @@ namespace Aquatir
 
             normalizedText = Regex.Replace(normalizedText, @"\bхк\b", "х/к");
             normalizedText = Regex.Replace(normalizedText, @"\bгк\b", "г/к");
-            normalizedText = Regex.Replace(normalizedText, @"\bслабосол\b|\bслабосоленая\b", "с/с");
-            normalizedText = Regex.Replace(normalizedText, @"\bспецпосол\b|\bспец\b", "сп/п");
-            normalizedText = Regex.Replace(normalizedText, @"\bпряная\b|\bпрянп\b", "п/п");
+            // ИЗМЕНЕНИЕ: Теперь включает "малосол", "малосоленая" и "м/с"
+            normalizedText = Regex.Replace(normalizedText, @"\bслабосол\b|\bслабосоленая\b|\bмалосол\b|\bмалосоленая\b|\bм/с\b", "с/с");
+            normalizedText = Regex.Replace(normalizedText, @"\bспецпосол\b|\bспец\b", "спец/п");
+            normalizedText = Regex.Replace(normalizedText, @"\bпряная\b|\bпрянп\b", "прян/п");
+            normalizedText = Regex.Replace(normalizedText, @"\bкоробка\b|\bкоробки\b", "упаковка");
+            normalizedText = Regex.Replace(normalizedText, @"\bведра\b|\bвёдер\b", "в");
             normalizedText = normalizedText
                 .Replace("пресервы", "пр-вы")
                 .Replace("пресерв", "пр-вы")
                 .Replace("сельдь", "с-дь")
-                .Replace("скумбрия", "ск.")
-                .Replace("скумбр", "ск.")
+                // ИЗМЕНЕНИЕ: Удалена безусловная замена "скумбрия" на "ск."
+                // .Replace("скумбрия", "ск.")
+                .Replace("скумбр", "ск.") // Это правило оставлено
                 .Replace("осётр", "ос.")
                 .Replace("осетр", "ос.")
                 .Replace("лосось", "лос.")
-                .Replace("сёмга", "семга")  
-                .Replace("семга", "сёмга"); 
+                .Replace("сёмга", "семга")
+                .Replace("семга", "сёмга");
 
             if (isProductNameFromList)
             {
@@ -154,8 +158,10 @@ namespace Aquatir
                     .Replace("шт.", "шт")
                     .Replace("в.", "в")
                     .Replace("конт.", "конт");
+                // Это правило (удаление чисел с единицами) применяется к названиям продуктов из списка
+                normalizedText = Regex.Replace(normalizedText, @"\b[0-9]+([.,][0-9]+)?\s*(кг|грамм|гр|л)\b", "");
             }
-            else
+            else // Для обработки ввода пользователя
             {
                 normalizedText = normalizedText
                     .Replace("килограмма", "кг")
@@ -179,7 +185,9 @@ namespace Aquatir
                 normalizedText = Regex.Replace(normalizedText, @"\b\d{2}\s*/\s*\d{2}\b", "");
                 normalizedText = Regex.Replace(normalizedText, @"\b\d{2}\s+на\s+\d{2}\b", "");
                 normalizedText = Regex.Replace(normalizedText, @"\b\d{2}\s+\d{2}\b", "");
-                normalizedText = Regex.Replace(normalizedText, @"\b[0-9]+([.,][0-9]+)?\s*(кг|грамм|гр|л)\b", "");
+                // Правило удаления чисел с единицами (кг, грамм, л) УДАЛЕНО из этого блока,
+                // чтобы оно не влияло на ввод пользователя перед парсингом количества.
+                // normalizedText = Regex.Replace(normalizedText, @"\b[0-9]+([.,][0-9]+)?\s*(кг|грамм|гр|л)\b", "");
                 normalizedText = Regex.Replace(normalizedText, @"\bрыба\b|\bхочу\b|\bмне\b|\bдобавь\b|\bпожалуйста\b", "");
             }
 
@@ -188,7 +196,6 @@ namespace Aquatir
 
             return normalizedText;
         }
-
 
         private async void OnVoiceInputClicked(object sender, EventArgs e)
         {
