@@ -121,7 +121,7 @@
                     </Grid>
                 </Border>
 
-                <Border Margin="0,5">
+             <!--   <Border Margin="0,5">
                     <Grid ColumnDefinitions="*, Auto">
                         <Label Text="Отключить цветовые подсказки"
                                VerticalOptions="Center"
@@ -131,7 +131,7 @@
                         <Switch x:Name="IgnoreColorsSwitch" Grid.Column="1" />
                     </Grid>
                 </Border>
-
+             -->
                 <Border Margin="0,5">
                     <Grid ColumnDefinitions="*, Auto">
                         <Label Text="Отображать продукцию в упаковках (УП.)"
@@ -175,7 +175,7 @@
                         BackgroundColor="#0078D7" />
 
                 <Label x:Name="VersionLabel"
-                       Text="Версия программы: r3.3.0 от 07.07.2025"
+                       Text="Версия программы: r4.0.0 от 10.07.2025"
                        FontSize="14"
                        HorizontalOptions="Center"
                        TextColor="{StaticResource TextColorHint}"

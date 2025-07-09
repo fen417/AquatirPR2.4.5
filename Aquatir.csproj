@@ -171,6 +171,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Plugin.LocalNotification" Version="12.0.1" />
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+    <PackageReference Include="Xam.Plugins.TextToSpeech" Version="4.0.0.7" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Resources\Assets\sc250ke.png">

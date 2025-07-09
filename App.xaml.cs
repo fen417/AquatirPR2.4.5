@@ -14,10 +14,18 @@ namespace Aquatir
         public static TaskCompletionSource<bool> DatabaseLoadedTcs = new TaskCompletionSource<bool>();
         public bool ReturnToMainMenuAfterAddingProduct { get; set; } = false;
 
+
         public App()
         {
             InitializeComponent();
             InitializeDatabaseAsync();
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+            {
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    await Application.Current.MainPage.DisplayAlert("Критическая ошибка", e.ExceptionObject.ToString(), "OK");
+                });
+            };
             AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
             {
                 if (args.ExceptionObject is Exception ex)
@@ -337,6 +345,7 @@ namespace Aquatir
             }
         }
     }
+
     public static class AppState
     {
         // Static constructor with error handling

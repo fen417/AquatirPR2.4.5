@@ -12,13 +12,12 @@ namespace Aquatir
             InitializeComponent();
             AutoReturnSwitch.IsToggled = Preferences.Get("AutoReturnEnabled", false);
             //  ShowPriceSwitch.IsToggled = Preferences.Get("ShowPriceEnabled", false);
-            ShowPackagedProductsSwitch.IsToggled = Preferences.Get("ShowPackagedProducts", true); // По умолчанию включено
-            IgnoreColorsSwitch.IsToggled = Preferences.Get("IgnoreColors", false);
-            ShowProductImagesSwitch.IsToggled = Preferences.Get("ShowProductImages", false); // По умолчанию выключено
-            // Подписка на события переключателей
+            ShowPackagedProductsSwitch.IsToggled = Preferences.Get("ShowPackagedProducts", true);
+           // IgnoreColorsSwitch.IsToggled = Preferences.Get("IgnoreColors", false);
+            ShowProductImagesSwitch.IsToggled = Preferences.Get("ShowProductImages", false);
             AutoReturnSwitch.Toggled += OnAutoReturnToggled;
-            IgnoreColorsSwitch.Toggled += OnIgnoreColorsToggled;
-            //  ShowPriceSwitch.Toggled += OnShowPriceToggled;
+            // IgnoreColorsSwitch.Toggled += OnIgnoreColorsToggled;
+            // ShowPriceSwitch.Toggled += OnShowPriceToggled;
             ShowPackagedProductsSwitch.Toggled += OnShowPackagedProductsToggled;
             ShowProductImagesSwitch.Toggled += OnShowProductImagesToggled;
         }
@@ -31,11 +30,11 @@ namespace Aquatir
         {
             Preferences.Set("ShowProductImages", e.Value);
         }
-        private void OnIgnoreColorsToggled(object sender, ToggledEventArgs e)
+      /*  private void OnIgnoreColorsToggled(object sender, ToggledEventArgs e)
         {
             Preferences.Set("IgnoreColors", e.Value);
         }
-
+      */
         /*  private void OnShowPriceToggled(object sender, ToggledEventArgs e)
           {
               Preferences.Set("ShowPriceEnabled", e.Value);
@@ -54,6 +53,13 @@ namespace Aquatir
         private async void OnWhatsNewClicked(object sender, EventArgs e)
         {
             string patchNotes = @"
+Что нового в версии r4.0.0:
+- Добавлен голосовой ввод для набора заявки
+- Исправления интерфейса
+
+Что нового в версии r3.3.1:
+- Исправление ошибок
+
 Что нового в версии r3.3.0:
 - Изменение стиля интерфейса в соответствии с рекомендациями Material Design
 - Исправлен сбой, из-за которого заявка правильно не приходила на почту
@@ -71,7 +77,7 @@ namespace Aquatir
 - Добавлена возможность включить в настройках отображение упаковки продукции
 
 Что нового в версии r3.0.0:
-- Добавлена редактор списка продукции (для менеджеров)
+- Добавлен редактор списка продукции (для менеджеров)
 - Обновлён интерфейс главной страницы, страниц истории и деталей заказа, страницы настроек
 
 Что нового в версии r2.8.2:
@@ -141,12 +147,12 @@ namespace Aquatir
                 message.Subject = "Обратная связь по приложению Aquatir";
                 message.Body = $"Обратная связь от пользователя приложения:\n\n{feedbackText}\n\n3.1.0";
 
-                using (var client = new SmtpClient("smtp.mail.ru", 587)) // Изменен порт на 587
+                using (var client = new SmtpClient("smtp.mail.ru", 587))
                 {
                     client.EnableSsl = true;
-                    client.UseDefaultCredentials = false; // Явно указываем не использовать учетные данные по умолчанию
+                    client.UseDefaultCredentials = false;
                     client.Credentials = new NetworkCredential("rep.1958@mail.ru", "zyxrhkQb4KwE0Udwz2cx");
-                    client.Timeout = 10000; // Установка таймаута в 10 секунд
+                    client.Timeout = 10000;
 
                     try
                     {

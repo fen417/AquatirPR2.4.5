@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+п»їusing System.Collections.Generic;
 using Microsoft.Maui.Controls;
 
 namespace Aquatir
@@ -16,30 +16,33 @@ namespace Aquatir
             RefreshOrderHistory();
         }
 
-        // Новый обработчик для CollectionView (вместо OnOrderTapped)
+        // ГЌГ®ГўГ»Г© Г®ГЎГ°Г ГЎГ®ГІГ·ГЁГЄ Г¤Г«Гї CollectionView (ГўГ¬ГҐГ±ГІГ® OnOrderTapped)
         private async void OnOrderSelected(object sender, SelectionChangedEventArgs e)
         {
             if (e.CurrentSelection.FirstOrDefault() is Order selectedOrder)
             {
                 await Navigation.PushAsync(new OrderDetailsPage(selectedOrder));
-                OrdersCollectionView.SelectedItem = null; // сброс выбора, чтобы можно было повторно кликнуть по элементу
+                OrdersCollectionView.SelectedItem = null; // Г±ГЎГ°Г®Г± ГўГ»ГЎГ®Г°Г , Г·ГІГ®ГЎГ» Г¬Г®Г¦Г­Г® ГЎГ»Г«Г® ГЇГ®ГўГІГ®Г°Г­Г® ГЄГ«ГЁГЄГ­ГіГІГј ГЇГ® ГЅГ«ГҐГ¬ГҐГ­ГІГі
+
+
+
             }
         }
 
         private async void OnClearOrderHistoryClicked(object sender, EventArgs e)
         {
-            bool userConfirmed = await DisplayAlert("Подтверждение",
-                                                     "Вы уверены, что хотите очистить историю заказов?",
-                                                     "Да",
-                                                     "Нет");
+            bool userConfirmed = await DisplayAlert("ГЏГ®Г¤ГІГўГҐГ°Г¦Г¤ГҐГ­ГЁГҐ",
+                                                     "Г‚Г» ГіГўГҐГ°ГҐГ­Г», Г·ГІГ® ГµГ®ГІГЁГІГҐ Г®Г·ГЁГ±ГІГЁГІГј ГЁГ±ГІГ®Г°ГЁГѕ Г§Г ГЄГ Г§Г®Гў?",
+                                                     "Г„Г ",
+                                                     "ГЌГҐГІ");
 
             if (userConfirmed)
             {
                 var orderHistoryService = new OrderHistoryService();
                 orderHistoryService.ClearOrderHistory();
-                OrdersCollectionView.ItemsSource = new List<Order>(); // очистка визуально
+                OrdersCollectionView.ItemsSource = new List<Order>(); // Г®Г·ГЁГ±ГІГЄГ  ГўГЁГ§ГіГ Г«ГјГ­Г®
 
-                await DisplayAlert("Успех", "История заказов успешно очищена.", "OK");
+                await DisplayAlert("Г“Г±ГЇГҐГµ", "Г€Г±ГІГ®Г°ГЁГї Г§Г ГЄГ Г§Г®Гў ГіГ±ГЇГҐГёГ­Г® Г®Г·ГЁГ№ГҐГ­Г .", "OK");
             }
         }
 
@@ -52,6 +55,7 @@ namespace Aquatir
 
         public void RefreshOrderHistory()
         {
+
             var orderHistoryService = new OrderHistoryService();
             var history = orderHistoryService.LoadOrderHistory();
             OrdersCollectionView.ItemsSource = history.Orders;

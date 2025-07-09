@@ -112,6 +112,7 @@ namespace Aquatir
         public string Name { get; set; }
         public decimal Quantity { get; set; }
         public bool IsNew { get; set; }
+        public string NormalizedNameForSearch { get; set; }
         public bool IsRes { get; set; }
         public bool IsEnd { get; set; }
         [Ignore]
@@ -137,7 +138,7 @@ namespace Aquatir
         }
 
         // Метод для получения единицы измерения
-        private string GetUnitFromName(string productName)
+        public static string GetUnitFromName(string productName)
         {
             if (productName.EndsWith("УП.", StringComparison.OrdinalIgnoreCase))
             {
@@ -162,7 +163,6 @@ namespace Aquatir
             return string.Empty;
         }
 
-        // Метод для удаления суффиксов из названия продукта
         private string RemoveUnitFromName(string productName)
         {
             if (string.IsNullOrEmpty(productName)) return productName;

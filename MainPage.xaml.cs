@@ -5,15 +5,15 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Devices;
-using Microsoft.Maui.Storage;
 using Plugin.LocalNotification;
+
 
 namespace Aquatir
 {
     public partial class MainPage : ContentPage
     {
+        private readonly ISpeechToTextService _speechToTextService; // Измените тип
+        private ObservableCollection<ProductItem> _allAvailableProducts;
         private ObservableCollection<Order> _orders = new ObservableCollection<Order>();
         private Order _currentOrder = new Order();
         private Dictionary<string, List<string>> _customersByDirection;
@@ -22,11 +22,13 @@ namespace Aquatir
         public bool IsManager { get; set; }
         public bool IsNotManager => !IsManager;
 
-        public MainPage()
+        public MainPage(ISpeechToTextService speechToTextService)
         {
             InitializeComponent();
+            _speechToTextService = speechToTextService;
             OrderDatePicker.Date = DateTime.Today;
             Connectivity.Current.ConnectivityChanged += Current_ConnectivityChanged;
+            LoadAllProductsForVoiceRecognition();
 #if ANDROID
             ScheduleWeeklyNotification();
             CheckMissedNotification();
@@ -86,6 +88,407 @@ namespace Aquatir
             OrdersCollectionView.ItemsSource = _orders;
         }
 
+        private async void LoadAllProductsForVoiceRecognition()
+        {
+            try
+            {
+                // Загружаем продукты из кэша. Если кэш пуст, то данные будут загружены из JSON.
+                // Предполагается, что ProductCache.CachedProducts уже содержит или может загрузить данные из productsCOLOR.json
+                if (ProductCache.CachedProducts == null || ProductCache.CachedProducts.Count == 0)
+                {
+                    // Это место, где вы должны загрузить ваш productsCOLOR.json
+                    // Если у вас есть ProductCache, который это делает, убедитесь, что он вызван.
+                    // Для примера, я добавлю код для загрузки, если ProductCache не делает это автоматически
+                    using var stream = await FileSystem.OpenAppPackageFileAsync("productsCOLOR.json");
+                    using var reader = new StreamReader(stream);
+                    var jsonContent = await reader.ReadToEndAsync();
+                    ProductCache.CachedProducts = JsonConvert.DeserializeObject<Dictionary<string, List<ProductItem>>>(jsonContent);
+                }
+
+                _allAvailableProducts = new ObservableCollection<ProductItem>();
+                foreach (var group in ProductCache.CachedProducts.Values)
+                {
+                    foreach (var product in group)
+                    {
+                        // Нормализуем имя продукта для поиска и сохраняем его
+                        product.NormalizedNameForSearch = NormalizeTextForSearch(product.Name, isProductNameFromList: true);
+                        _allAvailableProducts.Add(product);
+                    }
+                }
+                IsDataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Ошибка загрузки данных", $"Не удалось загрузить данные о продуктах для голосового распознавания: {ex.Message}", "OK");
+                IsDataLoaded = false;
+            }
+        }
+        private string NormalizeTextForSearch(string text, bool isProductNameFromList = false)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            string normalizedText = text.ToLowerInvariant();
+
+            // 1. Стандартизация сокращений
+            normalizedText = Regex.Replace(normalizedText, @"\bхк\b", "х/к");
+            normalizedText = Regex.Replace(normalizedText, @"\bгк\b", "г/к");
+            normalizedText = Regex.Replace(normalizedText, @"\bслабосол\b|\bслабосоленая\b", "с/с");
+            normalizedText = Regex.Replace(normalizedText, @"\bспецпосол\b|\bспец\b", "сп/п");
+            normalizedText = Regex.Replace(normalizedText, @"\bпряная\b|\bпрянп\b", "п/п"); // Добавьте прянп, если это возможное искажение
+
+            // 2. Стандартизация единиц измерения для поиска
+            // Для имен продуктов из списка, мы хотим сохранить их как они есть (ВЕС., УП., ШТ. и т.д.)
+            if (isProductNameFromList)
+            {
+                normalizedText = normalizedText
+                                .Replace("вес.", "кг") // Нормализуем для поиска, чтобы "вес." в продукте соответствовал "кг" в речи
+                                .Replace("уп.", "уп") // Убираем точку для более простого сопоставления с речью
+                                .Replace("шт.", "шт")
+                                .Replace("в.", "в")
+                                .Replace("конт.", "конт");
+            }
+            else // Для распознанного речевого ввода
+            {
+                normalizedText = normalizedText
+                                .Replace("килограмма", "кг")
+                                .Replace("килограмм", "кг")
+                                .Replace("кило", "кг")
+                                .Replace("штука", "шт")
+                                .Replace("штуки", "шт")
+                                .Replace("штук", "шт")
+                                .Replace("ведро", "в")
+                                .Replace("упаковка", "уп")
+                                .Replace("упаковки", "уп")
+                                .Replace("упаковок", "уп")
+                                .Replace("контейнер", "конт")
+                                .Replace("контейнера", "конт")
+                                .Replace("контейнеров", "конт");
+                // Дополнительно удаляем общие слова, которые не являются частью названия продукта
+                normalizedText = Regex.Replace(normalizedText, @"\bрыба\b|\bхочу\b|\bмне\b|\bдобавь\b|\bпожалуйста\b", "").Trim();
+            }
+
+            // Удаляем возможные теги цвета, если они есть (они не нужны для поиска)
+            normalizedText = Regex.Replace(normalizedText, @"<\/?color.*?>", string.Empty);
+
+            // Очистка лишних пробелов
+            normalizedText = Regex.Replace(normalizedText, @"\s+", " ").Trim();
+
+            return normalizedText;
+        }
+
+
+        private async void OnVoiceInputClicked(object sender, EventArgs e)
+        {
+            if (!IsDataLoaded)
+            {
+                await DisplayAlert("Ошибка", "Данные о продуктах еще не загружены. Пожалуйста, подождите.", "OK");
+                return;
+            }
+
+            try
+            {
+                var isGranted = await _speechToTextService.RequestPermissions();
+                if (!isGranted)
+                {
+                    await DisplayAlert("Ошибка", "Разрешение на использование микрофона не предоставлено.", "OK");
+                    return;
+                }
+
+                // Можно добавить индикатор, что приложение слушает
+                // Например, Label SpeechIndicator с IsVisible=true и текстом "Слушаю..."
+
+                await DisplayAlert("Голосовой ввод", "Говорите, чтобы добавить продукты. Например: 'я хочу кильку хк 2 кило, ведро мойвы спец посола, 10 кг мороженого хека'", "OK");
+
+                string recognizedText = string.Empty;
+                try
+                {
+                    recognizedText = await _speechToTextService.ListenAsync(
+                        CultureInfo.GetCultureInfo("ru-RU"),
+                        CancellationToken.None
+                    );
+                }
+                catch (OperationCanceledException)
+                {
+                    await DisplayAlert("Голосовой ввод", "Распознавание отменено.", "OK");
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlert("Ошибка", $"Ошибка распознавания речи: {ex.Message}", "OK");
+                    return;
+                }
+                finally
+                {
+                    // Убрать индикатор, когда распознавание закончилось
+                }
+
+
+                if (!string.IsNullOrWhiteSpace(recognizedText))
+                {
+                    ParseAndAddProducts(recognizedText);
+                }
+                else
+                {
+                    await DisplayAlert("Голосовой ввод", "Ничего не было распознано. Попробуйте еще раз.", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Ошибка", $"Произошла ошибка при голосовом вводе: {ex.Message}", "OK");
+            }
+        }
+
+        private void ParseAndAddProducts(string voiceInput)
+        {
+            Debug.WriteLine($"Исходный голосовой ввод: {voiceInput}");
+
+            // Нормализуем весь входной текст сразу, чтобы привести его к единому формату для дальнейшего парсинга
+            string normalizedInput = NormalizeTextForSearch(voiceInput, isProductNameFromList: false);
+            Debug.WriteLine($"Нормализованный ввод для парсинга: {normalizedInput}");
+
+            var productEntries = new List<(string Name, decimal Quantity, string Unit)>();
+
+            // Обновленное регулярное выражение для более гибкого парсинга
+            // Оно ищет [число] [единица] [название] ИЛИ [название] [число] [единица]
+            // (.+?) - нежадный захват любого текста (названия продукта)
+            // (\d+(?:[.,]\d+)?) - число с опциональной дробной частью
+            // (кг|шт|уп|в|конт) - список допустимых единиц
+            string pattern = @"(?:(\d+(?:[.,]\d+)?)\s*(кг|шт|уп|в|конт)\s*(.+?)(?=\s*(?:\d+(?:[.,]\d+)?\s*(?:кг|шт|уп|в|конт)|и|,|$))?)|(?:(.+?)\s*(\d+(?:[.,]\d+)?)\s*(кг|шт|уп|в|конт)(?=\s*(?:\d+(?:[.,]\d+)?\s*(?:кг|шт|уп|в|конт)|и|,|$)))";
+
+            var matches = Regex.Matches(normalizedInput, pattern, RegexOptions.IgnoreCase);
+
+            if (matches.Count == 0)
+            {
+                // Если нет полных совпадений с количеством и единицей, попробуем найти только название
+                // Это может быть случай "килька х/к" без количества, тогда по умолчанию будет 1
+                var simpleProductMatches = Regex.Matches(normalizedInput, @"(.+?)(?=\s*и|,|$)", RegexOptions.IgnoreCase);
+                foreach (Match simpleMatch in simpleProductMatches)
+                {
+                    string simpleProductName = simpleMatch.Groups[1].Value.Trim();
+                    if (!string.IsNullOrWhiteSpace(simpleProductName))
+                    {
+                        // Ищем продукт с учетом нормализации
+                        var foundProduct = FindBestProductMatch(simpleProductName, ""); // Пустая единица, т.к. ее не было в речи
+                        if (foundProduct != null)
+                        {
+                            productEntries.Add((foundProduct.Name, 1m, ProductItem.GetUnitFromName(foundProduct.Name))); // По умолчанию 1 и официальная единица
+                        }
+                    }
+                }
+            }
+            else
+            {
+                foreach (Match match in matches)
+                {
+                    string productNameRaw = string.Empty;
+                    decimal quantity = 0;
+                    string unitSpoken = string.Empty;
+
+                    if (match.Groups[1].Success) // Quantity-Unit-Name pattern
+                    {
+                        quantity = decimal.Parse(match.Groups[1].Value.Replace(',', '.'), CultureInfo.InvariantCulture);
+                        unitSpoken = match.Groups[2].Value;
+                        productNameRaw = match.Groups[3].Value.Trim();
+                    }
+                    else if (match.Groups[4].Success) // Name-Quantity-Unit pattern
+                    {
+                        productNameRaw = match.Groups[4].Value.Trim();
+                        quantity = decimal.Parse(match.Groups[5].Value.Replace(',', '.'), CultureInfo.InvariantCulture);
+                        unitSpoken = match.Groups[6].Value;
+                    }
+
+                    // Удаляем единицу из productNameRaw, чтобы получить чистое название для поиска
+                    string cleanedProductName = RemoveSpokenUnitFromProductName(productNameRaw, unitSpoken);
+
+                    if (quantity > 0 && !string.IsNullOrWhiteSpace(cleanedProductName))
+                    {
+                        // Теперь ищем продукт используя чистое название и нормализованную единицу
+                        var matchedProduct = FindBestProductMatch(cleanedProductName, unitSpoken);
+
+                        if (matchedProduct != null)
+                        {
+                            productEntries.Add((matchedProduct.Name, quantity, ProductItem.GetUnitFromName(matchedProduct.Name)));
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"Could not find a match for product: {cleanedProductName} with unit {unitSpoken}");
+                            Dispatcher.Dispatch(async () =>
+                            {
+                                await DisplayAlert("Продукт не найден", $"Не удалось найти продукт: \"{cleanedProductName}\" с количеством \"{quantity} {unitSpoken}\".", "OK");
+                            });
+                        }
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"Не удалось разобрать часть: {match.Value}");
+                    }
+                }
+            }
+
+
+            if (productEntries.Any())
+            {
+                foreach (var entry in productEntries)
+                {
+                    AddProductToOrder(entry.Name, entry.Quantity);
+                }
+
+                Dispatcher.Dispatch(async () =>
+                {
+                    await DisplayAlert("Успех", "Продукты были добавлены в заявку.", "OK");
+                    UpdateOrderDisplay(); // Обновите отображение заказа
+                });
+            }
+            else
+            {
+                Dispatcher.Dispatch(async () =>
+                {
+                    await DisplayAlert("Не удалось добавить", "Не удалось распознать продукты и количество из вашей речи. Пожалуйста, попробуйте еще раз.", "OK");
+                });
+            }
+        }
+
+        private string RemoveSpokenUnitFromProductName(string productName, string unit)
+        {
+            // Здесь unit уже нормализован (кг, уп, шт и т.д.)
+            // Проверяем, заканчивается ли productName этим unit
+            if (productName.EndsWith(unit, StringComparison.OrdinalIgnoreCase))
+            {
+                return productName.Substring(0, productName.Length - unit.Length).Trim();
+            }
+            return productName;
+        }
+
+        // Helper to find the best product match
+        private ProductItem FindBestProductMatch(string spokenProductNamePart, string spokenUnit)
+        {
+            // Нормализуем часть названия продукта для поиска, как из речи
+            string normalizedSpokenProductNamePart = NormalizeTextForSearch(spokenProductNamePart, isProductNameFromList: false);
+
+            // Нормализуем произнесенную единицу для сравнения с единицами в ProductItem.GetUnitFromName
+            string normalizedSpokenUnit = spokenUnit.ToLower(); // кг, уп, шт и т.д.
+
+            Debug.WriteLine($"Поиск: normalizedSpokenProductNamePart='{normalizedSpokenProductNamePart}', normalizedSpokenUnit='{normalizedSpokenUnit}'");
+
+            ProductItem bestMatch = null;
+            int bestScore = -1;
+
+            foreach (var product in _allAvailableProducts)
+            {
+                if (string.IsNullOrEmpty(product.NormalizedNameForSearch)) continue;
+
+                // Проверяем, содержит ли нормализованное имя продукта из списка нормализованную часть из речи
+                if (product.NormalizedNameForSearch.Contains(normalizedSpokenProductNamePart))
+                {
+                    int currentScore = normalizedSpokenProductNamePart.Length; // Базовый счет за совпадение подстроки
+
+                    // Проверяем соответствие единиц
+                    string productOfficialUnit = ProductItem.GetUnitFromName(product.Name).ToLower(); // Получаем "кг", "уп", "шт" и т.д.
+
+                    // Если произнесена единица, и она совпадает с официальной единицей продукта
+                    if (!string.IsNullOrEmpty(normalizedSpokenUnit) && productOfficialUnit == normalizedSpokenUnit)
+                    {
+                        currentScore += 100; // Большой бонус за совпадение единицы
+                    }
+                    // Если единица не произнесена, но мы нашли продукт, и его единица является "кг", даем небольшой бонус, так как это часто подразумевается
+                    else if (string.IsNullOrEmpty(normalizedSpokenUnit) && productOfficialUnit == "кг")
+                    {
+                        currentScore += 10;
+                    }
+
+                    // Если длина совпадения больше или счет лучше
+                    if (currentScore > bestScore)
+                    {
+                        bestScore = currentScore;
+                        bestMatch = product;
+                    }
+                }
+            }
+            return bestMatch;
+        }
+
+        // Этот метод будет вызван из ParseAndAddProducts, его содержание осталось без изменений, но убедитесь, что он есть.
+        public void AddProductToOrder(string productName, decimal quantity)
+        {
+            try
+            {
+                var existingProduct = _currentOrder.Products
+                    .FirstOrDefault(p => p.Name == productName);
+
+                if (existingProduct != null)
+                {
+                    existingProduct.Quantity += quantity;
+                }
+                else
+                {
+                    var productItem = new ProductItem
+                    {
+                        Name = productName,
+                        Quantity = quantity,
+                        // Используем DatabaseService для получения цены, если ProductItem не содержит напрямую.
+                        // Или убедитесь, что ваш ProductItem имеет эти цены, загруженные из ProductCache
+                        PricePerKg = productName.EndsWith("ВЕС.", StringComparison.OrdinalIgnoreCase) ? GetProductPrice(productName, "Kg") : 0,
+                        PricePerUnit = productName.EndsWith("УП.", StringComparison.OrdinalIgnoreCase) ? GetProductPrice(productName, "Unit") : 0,
+                        PricePerCont = productName.EndsWith("КОНТ.", StringComparison.OrdinalIgnoreCase) ? GetProductPrice(productName, "Cont") : 0,
+                        PricePerPiece = productName.EndsWith("ШТ.", StringComparison.OrdinalIgnoreCase) ? GetProductPrice(productName, "Piece") : 0,
+                        PricePerVedro = productName.EndsWith("В.", StringComparison.OrdinalIgnoreCase) ? GetProductPrice(productName, "Vedro") : 0
+                    };
+                    _currentOrder.Products.Add(productItem);
+                }
+
+                Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
+
+                UpdatePreview();
+                SaveCurrentOrder();
+            }
+            catch (Exception ex)
+            {
+                DisplayAlert("Ошибка", $"Произошла ошибка при добавлении продукта: {ex.Message}", "OK");
+            }
+        }
+        private void UpdateOrderDisplay()
+        {
+            OrdersCollectionView.ItemsSource = null;
+            OrdersCollectionView.ItemsSource = _orders;
+            UpdatePreview(); // Обновить также и предпросмотр текущего заказа
+        }
+
+
+        // Helper to find the best product match
+
+        private string RemoveUnitFromName(string productName)
+        {
+            // Эта функция должна быть согласована с тем, как единицы измерения сохраняются в ProductItem
+            // Она удаляет суффиксы единиц измерения, чтобы получить "чистое" название продукта.
+            string[] units = { "ВЕС.", "УП.", "ШТ.", "В.", "КОНТ." }; // Используем точные суффиксы из JSON
+            string cleanedName = productName;
+            foreach (var unit in units)
+            {
+                if (cleanedName.EndsWith(unit, StringComparison.OrdinalIgnoreCase))
+                {
+                    cleanedName = cleanedName.Substring(0, cleanedName.Length - unit.Length).Trim();
+                    break;
+                }
+            }
+            return RemoveColorTags(cleanedName); // Также удаляем теги цвета
+        }
+
+        // Helper to get official unit from spoken unit
+        private string GetOfficialUnitFromSpokenUnit(string spokenUnit)
+        {
+            return spokenUnit.ToLower() switch
+            {
+                "кг" => "ВЕС.", // Assuming "ВЕС." for kilograms
+                "уп" => "УП.",
+                "шт" => "ШТ.",
+                "в" => "В.",
+                "конт" => "КОНТ.",
+                _ => ""
+            };
+        }
         private void ScheduleWeeklyNotification()
         {
             var notification = new NotificationRequest
@@ -396,7 +799,6 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 });
             }
 
-            // Отправляем одно письмо с полной разбивкой
             SendEmailForProductCategory(processedOrders, customerNames, orderDateText, additionalOrderText, "", groupOrder);
         }
 
@@ -684,44 +1086,7 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             }
         }
 
-        public void AddProductToOrder(string productName, decimal quantity)
-        {
-            try
-            {
-                var existingProduct = _currentOrder.Products
-                    .FirstOrDefault(p => p.Name == productName);
-
-                if (existingProduct != null)
-                {
-                    existingProduct.Quantity += quantity;
-                }
-                else
-                {
-                    var productItem = new ProductItem
-                    {
-                        Name = productName,
-                        Quantity = quantity,
-                        // PricePerKg = productName.EndsWith("ВЕС.") ? GetProductPrice(productName, "Kg") : 0,
-                        // PricePerUnit = productName.EndsWith("УП.") ? GetProductPrice(productName, "Unit") : 0,
-                        // PricePerCont = productName.EndsWith("КОНТ.") ? GetProductPrice(productName, "Cont") : 0,
-                        // PricePerPiece = productName.EndsWith("ШТ.") ? GetProductPrice(productName, "Piece") : 0,
-                        // PricePerVedro = productName.EndsWith("В.") ? GetProductPrice(productName, "Vedro") : 0
-                    };
-
-                    _currentOrder.Products.Add(productItem);
-                }
-
-                Preferences.Set("SelectedOrderDate", OrderDatePicker.Date.ToString("o"));
-
-                UpdatePreview();
-                SaveCurrentOrder();
-            }
-            catch (Exception ex)
-            {
-                DisplayAlert("Ошибка", $"Произошла ошибка при добавлении продукта: {ex.Message}", "OK");
-            }
-        }
-
+       
         private void SaveCurrentOrder()
         {
             if (_currentOrder == null) return;
@@ -739,7 +1104,7 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
 
         private static readonly Dictionary<string, ProductItem> _productPriceCache = new Dictionary<string, ProductItem>();
 
-       /* private decimal GetProductPrice(string productName, string priceType)
+        private decimal GetProductPrice(string productName, string priceType)
         {
             if (_productPriceCache.TryGetValue(productName, out var product))
             {
@@ -772,7 +1137,7 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 }
             }
             return 0;
-        } */
+        }
 
         private async void OnGroupButtonClicked(object sender, EventArgs e)
         {
@@ -918,26 +1283,26 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
         private void UpdatePreview()
         {
             var productDescriptions = new List<string>();
-           // decimal totalAmount = 0;
+           decimal totalAmount = 0;
 
             foreach (var product in _currentOrder.Products)
             {
                 productDescriptions.Add(FormatProductString(product));
 
-               /* decimal price = 0;
+               decimal price = 0;
                 if (product.Name.EndsWith("ВЕС.")) price = product.PricePerKg;
                 else if (product.Name.EndsWith("УП.")) price = product.PricePerUnit;
                 else if (product.Name.EndsWith("КОНТ.")) price = product.PricePerCont;
                 else if (product.Name.EndsWith("ШТ.")) price = product.PricePerPiece;
                 else if (product.Name.EndsWith("В.")) price = product.PricePerVedro;
 
-                totalAmount += product.Quantity * price; */
+                totalAmount += product.Quantity * price;
             }
 
-           /* if (Preferences.Get("ShowPriceEnabled", false))
+           if (Preferences.Get("ShowPriceEnabled", false))
             {
                 productDescriptions.Add($"Сумма заказа: {totalAmount:N2} руб.");
-            } */
+            } 
 
             PreviewCollectionView.ItemsSource = productDescriptions;
         }
@@ -980,11 +1345,11 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 ? product.Quantity.ToString("0")
                 : product.Quantity.ToString("0.0#");
 
-            /* string priceInfo = "";
+             string priceInfo = "";
             bool showPrice = Preferences.Get("ShowPriceEnabled", false);
-            */
+            
 
-            /* if (showPrice)
+             if (showPrice)
             {
                 var priceMapping = new Dictionary<string, decimal>
                 {
@@ -999,7 +1364,7 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 {
                     priceInfo = $" ({product.Quantity * price:N2} руб.)";
                 }
-            } */
+            }
 
             return $"{productName} - {formattedQuantity} {unit}";
         }

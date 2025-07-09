@@ -183,11 +183,12 @@
                 <Button Text="Вяленая Продукция" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
                 <Button Text="Горячее Копчение" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
                 <Button Text="Пресервы" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
-                <Button Text="Фишки, вакуумная продукция, нарезки" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
+                <Button Text="Фишки, вакуумная продукция, нарезки" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" FontSize="14" />
                 <Button Text="Креветки и Морепродукты" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
                 <Button Text="Мороженная Продукция" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
-                <Button Text="Расходники (пакеты, перчатки и т.п.)" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" />
+                <Button Text="Расходники (пакеты, перчатки и т.п.)" Clicked="OnGroupButtonClicked" BackgroundColor="#4285F4" TextColor="White" FontSize="16" />
                 <Button Text="Вся продукция" Clicked="OnAllProductsButtonClicked" BackgroundColor="#34A853" TextColor="White" />
+                <Button Text="Голосовой Ввод" Clicked="OnVoiceInputClicked" BackgroundColor="YellowGreen" TextColor="White" />
             </VerticalStackLayout>
 
             <Label Text="Текущий заказ:"

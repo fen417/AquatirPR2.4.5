@@ -51,7 +51,7 @@ namespace Aquatir
             }
         }
 
-        public string FormattedOrderDetails => $"{FormattedCompletionDate}";
+        public string FormattedOrderDetails => $"{FormattedCompletionDate}\n{FormattedTotalAmount}";
 
         public string GetFormattedOrderSummary()
         {
@@ -89,28 +89,14 @@ namespace Aquatir
             return string.Join("\n", orderSummary);
         }
 
-        private string GetUnitFromName(string productName)
+        public static string GetUnitFromName(string productName)
         {
-            if (productName.EndsWith("УП.", StringComparison.OrdinalIgnoreCase))
-            {
-                return "уп.";
-            }
-            else if (productName.EndsWith("ШТ.", StringComparison.OrdinalIgnoreCase))
-            {
-                return "шт.";
-            }
-            else if (productName.EndsWith("ВЕС.", StringComparison.OrdinalIgnoreCase))
-            {
-                return "кг";
-            }
-            else if (productName.EndsWith("В.", StringComparison.OrdinalIgnoreCase))
-            {
-                return "в.";
-            }
-            else if (productName.EndsWith("КОНТ.", StringComparison.OrdinalIgnoreCase))
-            {
-                return "конт.";
-            }
+            // This logic is from your Order class and should be consistent
+            if (productName.EndsWith("ВЕС.", StringComparison.OrdinalIgnoreCase)) return "кг";
+            if (productName.EndsWith("УП.", StringComparison.OrdinalIgnoreCase)) return "уп.";
+            if (productName.EndsWith("ШТ.", StringComparison.OrdinalIgnoreCase)) return "шт.";
+            if (productName.EndsWith("КОНТ.", StringComparison.OrdinalIgnoreCase)) return "конт.";
+            if (productName.EndsWith("В.", StringComparison.OrdinalIgnoreCase)) return "в.";
             return string.Empty;
         }
 

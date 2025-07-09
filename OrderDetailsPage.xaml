@@ -171,7 +171,8 @@
                                  HorizontalOptions="FillAndExpand">
                 <Button Text="Восстановить для редактирования"
                         Clicked="OnRestoreOrderClicked"
-                        BackgroundColor="{StaticResource AccentColor}" />
+                        BackgroundColor="{StaticResource AccentColor}" 
+                        FontSize="16" />
 
                 <Button Text="Назад"
                         Clicked="OnBackButtonClicked"
