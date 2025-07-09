@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Plugin.LocalNotification;
+using FuzzySharp;
 
 
 namespace Aquatir
@@ -250,6 +251,49 @@ namespace Aquatir
                 await DisplayAlert("Ошибка", $"Произошла ошибка при голосовом вводе: {ex.Message}", "OK");
             }
         }
+
+        private ProductItem FindBestFuzzyProductMatch(string recognizedText, string unitSpoken)
+        {
+            string normalizedInput = NormalizeTextForSearch(recognizedText, false);
+
+            if (ProductCache.CachedProducts == null || ProductCache.CachedProducts.Count == 0)
+                return null;
+
+            // Отбираем продукты с подходящей единицей (или любой, если единица не распознана)
+            var candidates = ProductCache.CachedProducts
+                .SelectMany(g => g.Value)
+                .Where(p => !string.IsNullOrEmpty(p.NormalizedNameForSearch))
+                .Where(p =>
+                {
+                    string productUnit = ProductItem.GetUnitFromName(p.Name).ToLowerInvariant();
+                    return string.IsNullOrEmpty(unitSpoken) || string.Equals(productUnit, unitSpoken, StringComparison.OrdinalIgnoreCase);
+                })
+                .ToList();
+
+            if (candidates.Count == 0)
+                return null;
+
+            // Fuzzy-сравнение: ищем самое похожее имя
+            var matches = candidates
+                .Select(p => new
+                {
+                    Product = p,
+                    Score = Fuzz.Ratio(normalizedInput, p.NormalizedNameForSearch)
+                })
+                .OrderByDescending(m => m.Score)
+                .ToList();
+
+            var best = matches.FirstOrDefault();
+
+            if (best != null && best.Score >= 75) // Порог можно варьировать
+            {
+                Console.WriteLine($"[FuzzyMatch] Найден продукт: '{best.Product.Name}' с точностью {best.Score}%");
+                return best.Product;
+            }
+
+            return null;
+        }
+
         private void ParseAndAddProducts(string voiceInput)
         {
             Debug.WriteLine($"Исходный голосовой ввод: {voiceInput}");
@@ -315,7 +359,8 @@ namespace Aquatir
                     if (quantity > 0 && !string.IsNullOrWhiteSpace(cleanedProductName))
                     {
                         // Теперь ищем продукт используя чистое название и нормализованную единицу
-                        var matchedProduct = FindBestProductMatch(cleanedProductName, unitSpoken);
+                        var matchedProduct = FindBestFuzzyProductMatch(cleanedProductName, unitSpoken);
+
 
                         if (matchedProduct != null)
                         {

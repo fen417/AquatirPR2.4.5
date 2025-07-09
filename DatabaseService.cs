@@ -142,11 +142,11 @@ namespace Aquatir
         {
             if (productName.EndsWith("УП.", StringComparison.OrdinalIgnoreCase))
             {
-                return "уп.";
+                return "уп";
             }
             else if (productName.EndsWith("ШТ.", StringComparison.OrdinalIgnoreCase))
             {
-                return "шт.";
+                return "шт";
             }
             else if (productName.EndsWith("ВЕС.", StringComparison.OrdinalIgnoreCase))
             {
@@ -154,14 +154,15 @@ namespace Aquatir
             }
             else if (productName.EndsWith("В.", StringComparison.OrdinalIgnoreCase))
             {
-                return "в.";
+                return "в";
             }
             else if (productName.EndsWith("КОНТ.", StringComparison.OrdinalIgnoreCase))
             {
-                return "конт.";
+                return "конт";
             }
             return string.Empty;
         }
+
 
         private string RemoveUnitFromName(string productName)
         {
@@ -175,7 +176,8 @@ namespace Aquatir
                     return productName.Substring(0, productName.Length - unit.Length).Trim();
                 }
             }
-            return productName;
+            return productName.Trim();
         }
+
     }
 }
