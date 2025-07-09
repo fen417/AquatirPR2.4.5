@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Plugin.LocalNotification;
-using FuzzySharp;
 
 
 namespace Aquatir
@@ -93,10 +92,10 @@ namespace Aquatir
         {
             try
             {
-               
+
                 if (ProductCache.CachedProducts == null || ProductCache.CachedProducts.Count == 0)
                 {
-                   
+
                     using var stream = await FileSystem.OpenAppPackageFileAsync("productsCOLOR.json");
                     using var reader = new StreamReader(stream);
                     var jsonContent = await reader.ReadToEndAsync();
@@ -129,73 +128,57 @@ namespace Aquatir
 
             string normalizedText = text.ToLowerInvariant();
 
+            // 1. Стандартизация сокращений
             normalizedText = Regex.Replace(normalizedText, @"\bхк\b", "х/к");
             normalizedText = Regex.Replace(normalizedText, @"\bгк\b", "г/к");
-            // ИЗМЕНЕНИЕ: Теперь включает "малосол", "малосоленая" и "м/с"
-            normalizedText = Regex.Replace(normalizedText, @"\bслабосол\b|\bслабосоленая\b|\bмалосол\b|\bмалосоленая\b|\bм/с\b", "с/с");
-            normalizedText = Regex.Replace(normalizedText, @"\bспецпосол\b|\bспец\b", "спец/п");
-            normalizedText = Regex.Replace(normalizedText, @"\bпряная\b|\bпрянп\b", "прян/п");
-            normalizedText = Regex.Replace(normalizedText, @"\bкоробка\b|\bкоробки\b", "упаковка");
-            normalizedText = Regex.Replace(normalizedText, @"\bведра\b|\bвёдер\b", "в");
-            normalizedText = normalizedText
-                .Replace("пресервы", "пр-вы")
-                .Replace("пресерв", "пр-вы")
-                .Replace("сельдь", "с-дь")
-                // ИЗМЕНЕНИЕ: Удалена безусловная замена "скумбрия" на "ск."
-                // .Replace("скумбрия", "ск.")
-                .Replace("скумбр", "ск.") // Это правило оставлено
-                .Replace("осётр", "ос.")
-                .Replace("осетр", "ос.")
-                .Replace("лосось", "лос.")
-                .Replace("сёмга", "семга")
-                .Replace("семга", "сёмга");
+            normalizedText = Regex.Replace(normalizedText, @"\bслабосол\b|\bслабосоленая\b", "с/с");
+            normalizedText = Regex.Replace(normalizedText, @"\bспецпосол\b|\bспец\b", "сп/п");
+            normalizedText = Regex.Replace(normalizedText, @"\bпряная\b|\bпрянп\b", "п/п"); // Добавьте прянп, если это возможное искажение
 
+            // 2. Стандартизация единиц измерения для поиска
+            // Для имен продуктов из списка, мы хотим сохранить их как они есть (ВЕС., УП., ШТ. и т.д.)
             if (isProductNameFromList)
             {
                 normalizedText = normalizedText
-                    .Replace("вес.", "кг")
-                    .Replace("уп.", "уп")
-                    .Replace("шт.", "шт")
-                    .Replace("в.", "в")
-                    .Replace("конт.", "конт");
-                // Это правило (удаление чисел с единицами) применяется к названиям продуктов из списка
-                normalizedText = Regex.Replace(normalizedText, @"\b[0-9]+([.,][0-9]+)?\s*(кг|грамм|гр|л)\b", "");
+                                .Replace("вес.", "кг") // Нормализуем для поиска, чтобы "вес." в продукте соответствовал "кг" в речи
+                                .Replace("уп.", "уп") // Убираем точку для более простого сопоставления с речью
+                                .Replace("шт.", "шт")
+                                .Replace("в.", "в")
+                                .Replace("конт.", "конт");
             }
-            else // Для обработки ввода пользователя
+            else // Для распознанного речевого ввода
             {
                 normalizedText = normalizedText
-                    .Replace("килограмма", "кг")
-                    .Replace("килограмм", "кг")
-                    .Replace("кило", "кг")
-                    .Replace("штука", "шт")
-                    .Replace("штуки", "шт")
-                    .Replace("штук", "шт")
-                    .Replace("ведро", "в")
-                    .Replace("ведра", "в")
-                    .Replace("вёдер", "в")
-                    .Replace("упаковка", "уп")
-                    .Replace("упаковки", "уп")
-                    .Replace("упаковок", "уп")
-                    .Replace("коробки", "уп")
-                    .Replace("коробик", "уп")
-                    .Replace("контейнер", "конт")
-                    .Replace("контейнера", "конт")
-                    .Replace("контейнеров", "конт");
-
-                normalizedText = Regex.Replace(normalizedText, @"\b\d{2}\s*/\s*\d{2}\b", "");
-                normalizedText = Regex.Replace(normalizedText, @"\b\d{2}\s+на\s+\d{2}\b", "");
-                normalizedText = Regex.Replace(normalizedText, @"\b\d{2}\s+\d{2}\b", "");
-                // Правило удаления чисел с единицами (кг, грамм, л) УДАЛЕНО из этого блока,
-                // чтобы оно не влияло на ввод пользователя перед парсингом количества.
-                // normalizedText = Regex.Replace(normalizedText, @"\b[0-9]+([.,][0-9]+)?\s*(кг|грамм|гр|л)\b", "");
-                normalizedText = Regex.Replace(normalizedText, @"\bрыба\b|\bхочу\b|\bмне\b|\bдобавь\b|\bпожалуйста\b", "");
+                                .Replace("килограмма", "кг")
+                                .Replace("килограмм", "кг")
+                                .Replace("кило", "кг")
+                                .Replace("штука", "шт")
+                                .Replace("штуки", "шт")
+                                .Replace("штук", "шт")
+                                .Replace("ведро", "в")
+                                .Replace("ведра", "в")
+                                .Replace("вёдер", "в")
+                                .Replace("упаковка", "уп")
+                                .Replace("упаковки", "уп")
+                                .Replace("упаковок", "уп")
+                                .Replace("коробки", "уп")
+                                .Replace("коробик", "уп")
+                                .Replace("контейнер", "конт")
+                                .Replace("контейнера", "конт")
+                                .Replace("контейнеров", "конт");
+                // Дополнительно удаляем общие слова, которые не являются частью названия продукта
+                normalizedText = Regex.Replace(normalizedText, @"\bрыба\b|\bхочу\b|\bмне\b|\bдобавь\b|\bпожалуйста\b", "").Trim();
             }
 
+            // Удаляем возможные теги цвета, если они есть (они не нужны для поиска)
             normalizedText = Regex.Replace(normalizedText, @"<\/?color.*?>", string.Empty);
+
+            // Очистка лишних пробелов
             normalizedText = Regex.Replace(normalizedText, @"\s+", " ").Trim();
 
             return normalizedText;
         }
+
 
         private async void OnVoiceInputClicked(object sender, EventArgs e)
         {
@@ -214,9 +197,10 @@ namespace Aquatir
                     return;
                 }
 
-                SpeechIndicator.IsVisible = true;
-                SpeechIndicator.Text = "Слушаю..."; 
-                                                    
+                // *** ДОБАВЬТЕ ЭТИ СТРОКИ ***
+                SpeechIndicator.IsVisible = true; // Показать индикатор
+                SpeechIndicator.Text = "Слушаю..."; // Установить текст индикатора
+                                                    // *************************
 
                 await DisplayAlert("Голосовой ввод", "Говорите, чтобы добавить продукты. Например: 'я хочу кильку хк 2 кило, ведро мойвы спец посола, 10 кг мороженого хека'", "OK");
 
@@ -258,49 +242,6 @@ namespace Aquatir
                 await DisplayAlert("Ошибка", $"Произошла ошибка при голосовом вводе: {ex.Message}", "OK");
             }
         }
-
-        private ProductItem FindBestFuzzyProductMatch(string recognizedText, string unitSpoken)
-        {
-            string normalizedInput = NormalizeTextForSearch(recognizedText, false);
-
-            if (ProductCache.CachedProducts == null || ProductCache.CachedProducts.Count == 0)
-                return null;
-
-            // Отбираем продукты с подходящей единицей (или любой, если единица не распознана)
-            var candidates = ProductCache.CachedProducts
-                .SelectMany(g => g.Value)
-                .Where(p => !string.IsNullOrEmpty(p.NormalizedNameForSearch))
-                .Where(p =>
-                {
-                    string productUnit = ProductItem.GetUnitFromName(p.Name).ToLowerInvariant();
-                    return string.IsNullOrEmpty(unitSpoken) || string.Equals(productUnit, unitSpoken, StringComparison.OrdinalIgnoreCase);
-                })
-                .ToList();
-
-            if (candidates.Count == 0)
-                return null;
-
-            // Fuzzy-сравнение: ищем самое похожее имя
-            var matches = candidates
-                .Select(p => new
-                {
-                    Product = p,
-                    Score = Fuzz.Ratio(normalizedInput, p.NormalizedNameForSearch)
-                })
-                .OrderByDescending(m => m.Score)
-                .ToList();
-
-            var best = matches.FirstOrDefault();
-
-            if (best != null && best.Score >= 75) // Порог можно варьировать
-            {
-                Console.WriteLine($"[FuzzyMatch] Найден продукт: '{best.Product.Name}' с точностью {best.Score}%");
-                return best.Product;
-            }
-
-            return null;
-        }
-
         private void ParseAndAddProducts(string voiceInput)
         {
             Debug.WriteLine($"Исходный голосовой ввод: {voiceInput}");
@@ -366,8 +307,7 @@ namespace Aquatir
                     if (quantity > 0 && !string.IsNullOrWhiteSpace(cleanedProductName))
                     {
                         // Теперь ищем продукт используя чистое название и нормализованную единицу
-                        var matchedProduct = FindBestFuzzyProductMatch(cleanedProductName, unitSpoken);
-
+                        var matchedProduct = FindBestProductMatch(cleanedProductName, unitSpoken);
 
                         if (matchedProduct != null)
                         {
@@ -795,17 +735,17 @@ namespace Aquatir
                 await DisplayAlert("Ошибка", $"Не удалось отправить заказы: {ex.Message}", "OK");
             }
         }
-private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventArgs e)
-{
-    if (e.Value)
-    {
-        _currentOrder.IsAdditionalOrder = true;
-    }
-    else
-    {
-        _currentOrder.IsAdditionalOrder = false;
-    }
-}
+        private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventArgs e)
+        {
+            if (e.Value)
+            {
+                _currentOrder.IsAdditionalOrder = true;
+            }
+            else
+            {
+                _currentOrder.IsAdditionalOrder = false;
+            }
+        }
         private void SendOrdersByEmail(List<Order> selectedOrders)
         {
             var groupOrder = ProductCache.CachedProducts.Keys.ToList();
@@ -984,8 +924,8 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                     .Select(key => key.Substring("ProductSeen_".Length))
             );
         }
-       
-       
+
+
         private void RefreshPage()
         {
             OrdersCollectionView.ItemsSource = null;
@@ -1147,7 +1087,7 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
             }
         }
 
-       
+
         private void SaveCurrentOrder()
         {
             if (_currentOrder == null) return;
@@ -1344,13 +1284,13 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
         private void UpdatePreview()
         {
             var productDescriptions = new List<string>();
-           decimal totalAmount = 0;
+            decimal totalAmount = 0;
 
             foreach (var product in _currentOrder.Products)
             {
                 productDescriptions.Add(FormatProductString(product));
 
-               decimal price = 0;
+                decimal price = 0;
                 if (product.Name.EndsWith("ВЕС.")) price = product.PricePerKg;
                 else if (product.Name.EndsWith("УП.")) price = product.PricePerUnit;
                 else if (product.Name.EndsWith("КОНТ.")) price = product.PricePerCont;
@@ -1360,10 +1300,10 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 totalAmount += product.Quantity * price;
             }
 
-           if (Preferences.Get("ShowPriceEnabled", false))
+            if (Preferences.Get("ShowPriceEnabled", false))
             {
                 productDescriptions.Add($"Сумма заказа: {totalAmount:N2} руб.");
-            } 
+            }
 
             PreviewCollectionView.ItemsSource = productDescriptions;
         }
@@ -1406,11 +1346,11 @@ private void OnAdditionalOrderCheckedChanged(object sender, CheckedChangedEventA
                 ? product.Quantity.ToString("0")
                 : product.Quantity.ToString("0.0#");
 
-             string priceInfo = "";
+            string priceInfo = "";
             bool showPrice = Preferences.Get("ShowPriceEnabled", false);
-            
 
-             if (showPrice)
+
+            if (showPrice)
             {
                 var priceMapping = new Dictionary<string, decimal>
                 {
